@@ -1,0 +1,106 @@
+/* Styles personnalisés pour la carte des disparitions */
+
+/* Popup personnalisée */
+.custom-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+/* Animation pour les marqueurs */
+.leaflet-marker-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Contrôles de carte personnalisés */
+.map-controls {
+  z-index: 1000;
+}
+
+.map-controls button {
+  transition: all 0.2s ease-in-out;
+}
+
+.map-controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les alertes de proximité */
+.proximity-alert {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+/* Styles pour les statistiques */
+.stat-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive design pour mobile */
+@media (max-width: 768px) {
+  .custom-popup .leaflet-popup-content {
+    font-size: 14px;
+  }
+  
+  .map-controls {
+    top: 8px;
+    right: 8px;
+  }
+  
+  .map-controls button {
+    padding: 8px;
+  }
+}
+
+/* Styles pour les couches de la carte */
+.leaflet-control-layers {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-control-layers-toggle {
+  background-color: white;
+  border-radius: 8px;
+}
+
+/* Animation pour les cercles de proximité */
+.leaflet-interactive {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.leaflet-interactive:hover {
+  opacity: 0.8;
+}
