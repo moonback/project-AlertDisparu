@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from './Button';
 import { Alert } from './Alert';
-import { Upload, X, Image, Eye, Trash2 } from 'lucide-react';
+import { Upload, X, Image, Eye, Trash2, Brain } from 'lucide-react';
 
 export interface PhotoUploadItem {
   id: string;
@@ -13,6 +13,7 @@ export interface PhotoUploadItem {
 interface PhotoUploadProps {
   photos: PhotoUploadItem[];
   onPhotosChange: (photos: PhotoUploadItem[]) => void;
+  onImageSelectForAnalysis?: (file: File) => void;
   maxPhotos?: number;
   maxSizeMB?: number;
   className?: string;
@@ -21,6 +22,7 @@ interface PhotoUploadProps {
 export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   photos,
   onPhotosChange,
+  onImageSelectForAnalysis,
   maxPhotos = 5,
   maxSizeMB = 5,
   className = ''
@@ -86,6 +88,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleAnalyzeImage = (photo: PhotoUploadItem) => {
+    if (onImageSelectForAnalysis) {
+      onImageSelectForAnalysis(photo.file);
+    }
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div>
@@ -138,15 +146,29 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                       {(photo.file.size / 1024 / 1024).toFixed(1)}MB
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removePhoto(photo.id)}
-                    leftIcon={<Trash2 className="h-4 w-4" />}
-                  >
-                    Supprimer
-                  </Button>
+                  <div className="flex space-x-2">
+                    {onImageSelectForAnalysis && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAnalyzeImage(photo)}
+                        leftIcon={<Brain className="h-4 w-4" />}
+                        title="Analyser avec IA"
+                      >
+                        Analyser
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removePhoto(photo.id)}
+                      leftIcon={<Trash2 className="h-4 w-4" />}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="mb-3">
