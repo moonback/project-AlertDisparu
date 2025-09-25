@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
 import { PhotoUpload, PhotoUploadItem } from '../ui/PhotoUpload';
+import { ImageAnalysis } from '../ui/ImageAnalysis';
+import { GeminiSetupHelper } from '../ui/GeminiSetupHelper';
+import { QuickImageUpload } from '../ui/QuickImageUpload';
 import { 
   MapPin, 
   Calendar, 
@@ -20,7 +23,10 @@ import {
   Users,
   Save,
   X,
-  Image
+  Image,
+  Brain,
+  Upload,
+  CheckCircle
 } from 'lucide-react';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
@@ -61,6 +67,7 @@ const confidenceOptions = [
 interface AddObservationFormProps {
   missingPersonId: string;
   missingPersonName: string;
+  missingPersonDescription?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -68,12 +75,15 @@ interface AddObservationFormProps {
 export const AddObservationForm: React.FC<AddObservationFormProps> = ({
   missingPersonId,
   missingPersonName,
+  missingPersonDescription,
   onSuccess,
   onCancel
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<PhotoUploadItem[]>([]);
+  const [selectedImageForAnalysis, setSelectedImageForAnalysis] = useState<File | null>(null);
+  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
   const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
   const { addObservation } = useMissingPersonsStore();
   
@@ -81,7 +91,8 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
+    setValue
   } = useForm<ObservationFormData>({
     resolver: zodResolver(observationSchema)
   });
@@ -96,6 +107,47 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
     
     geocodeAddress(address, city, state);
   }, [watch, geocodeAddress]);
+
+  // Gérer la sélection d'une image pour l'analyse
+  const handleImageSelectForAnalysis = useCallback((file: File) => {
+    setSelectedImageForAnalysis(file);
+  }, []);
+
+  // Appliquer les résultats de l'analyse aux champs du formulaire
+  const handleAnalysisComplete = useCallback((analysisResult: any) => {
+    // Remplir les champs avec les données de l'analyse
+    if (analysisResult.description) {
+      setValue('description', analysisResult.description);
+    }
+    if (analysisResult.clothingDescription) {
+      setValue('clothingDescription', analysisResult.clothingDescription);
+    }
+    if (analysisResult.behaviorDescription) {
+      setValue('behaviorDescription', analysisResult.behaviorDescription);
+    }
+    if (analysisResult.companions) {
+      setValue('companions', analysisResult.companions);
+    }
+    if (analysisResult.vehicleInfo) {
+      setValue('vehicleInfo', analysisResult.vehicleInfo);
+    }
+    
+    // Définir le niveau de confiance basé sur l'analyse
+    if (analysisResult.confidence) {
+      setValue('confidenceLevel', analysisResult.confidence);
+    }
+    
+    // Marquer que les champs ont été remplis automatiquement
+    setFieldsAutoFilled(true);
+    
+    // Effacer l'image sélectionnée après application
+    setSelectedImageForAnalysis(null);
+  }, [setValue]);
+
+  // Effacer l'analyse
+  const handleClearAnalysis = useCallback(() => {
+    setSelectedImageForAnalysis(null);
+  }, []);
   
   // Fonction pour uploader les photos vers Supabase Storage
   const uploadPhotos = async (photos: PhotoUploadItem[]): Promise<string[]> => {
@@ -220,6 +272,41 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
       )}
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Analyse d'image en premier */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Brain className="h-5 w-5 mr-2" />
+              Analyse intelligente d'image
+            </h2>
+            <p className="text-sm text-gray-600">
+              Commencez par analyser une photo pour remplir automatiquement les champs descriptifs
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Upload rapide pour analyse */}
+              <QuickImageUpload
+                onImageSelect={setSelectedImageForAnalysis}
+                selectedFile={selectedImageForAnalysis}
+                onClear={handleClearAnalysis}
+              />
+              
+              {/* Composant d'analyse d'image */}
+              <ImageAnalysis
+                imageFile={selectedImageForAnalysis}
+                missingPersonName={missingPersonName}
+                missingPersonDescription={missingPersonDescription}
+                onAnalysisComplete={handleAnalysisComplete}
+                onClearAnalysis={handleClearAnalysis}
+              />
+              
+              {/* Aide pour la configuration Gemini */}
+              <GeminiSetupHelper />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Informations sur l'observateur */}
         <Card>
           <CardHeader>
@@ -332,7 +419,15 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
         {/* Description de l'observation */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Description de l'observation</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Description de l'observation</h2>
+              {fieldsAutoFilled && (
+                <div className="flex items-center space-x-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Champs remplis automatiquement</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -410,21 +505,22 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
           </CardContent>
         </Card>
         
-        {/* Photos */}
+        {/* Photos supplémentaires */}
         <Card>
           <CardHeader>
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
               <Image className="h-5 w-5 mr-2" />
-              Photos de l'observation
+              Photos supplémentaires
             </h2>
             <p className="text-sm text-gray-600">
-              Ajoutez des photos pour illustrer votre observation (optionnel)
+              Ajoutez d'autres photos pour illustrer votre observation (optionnel)
             </p>
           </CardHeader>
           <CardContent>
             <PhotoUpload
               photos={photos}
               onPhotosChange={setPhotos}
+              onImageSelectForAnalysis={handleImageSelectForAnalysis}
               maxPhotos={5}
               maxSizeMB={5}
             />

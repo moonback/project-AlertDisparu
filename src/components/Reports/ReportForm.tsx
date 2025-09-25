@@ -9,7 +9,10 @@ import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
-import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock } from 'lucide-react';
+import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock, Brain, CheckCircle } from 'lucide-react';
+import { ImageAnalysis } from '../ui/ImageAnalysis';
+import { QuickImageUpload } from '../ui/QuickImageUpload';
+import { GeminiSetupHelper } from '../ui/GeminiSetupHelper';
 import { useNavigate } from 'react-router-dom';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
@@ -66,6 +69,8 @@ const caseTypeOptions = [
 export const ReportForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [selectedImageForAnalysis, setSelectedImageForAnalysis] = useState<File | null>(null);
+  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
   const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
   const { addReport } = useMissingPersonsStore();
   const navigate = useNavigate();
@@ -74,7 +79,8 @@ export const ReportForm: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
+    setValue
   } = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema)
   });
@@ -90,6 +96,42 @@ export const ReportForm: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+  }, []);
+
+  // Utilitaire pour convertir un File en data URL
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve((e.target?.result as string) || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Appliquer les résultats d'analyse aux champs du formulaire
+  const handleAnalysisComplete = useCallback(async (analysisResult: any) => {
+    if (analysisResult.description) setValue('description', analysisResult.description);
+    if (analysisResult.clothingDescription) setValue('clothingDescription', analysisResult.clothingDescription);
+    if (analysisResult.behaviorDescription) setValue('behavioralInfo', analysisResult.behaviorDescription);
+
+    setFieldsAutoFilled(true);
+
+    // Définir la photo du signalement depuis l'image analysée
+    if (selectedImageForAnalysis) {
+      try {
+        const dataUrl = await fileToDataUrl(selectedImageForAnalysis);
+        setUploadedImage(dataUrl);
+      } catch {
+        // noop
+      }
+    }
+
+    // Effacer la sélection après application
+    setSelectedImageForAnalysis(null);
+  }, [selectedImageForAnalysis, setValue]);
+
+  const handleClearAnalysis = useCallback(() => {
+    setSelectedImageForAnalysis(null);
   }, []);
   
   const removeImage = () => {
@@ -191,6 +233,36 @@ export const ReportForm: React.FC = () => {
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Analyse d'image en premier */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Brain className="h-5 w-5 mr-2" />
+              Analyse intelligente d'image
+            </h2>
+            <p className="text-sm text-gray-600">
+              Commencez par analyser une photo pour pré-remplir automatiquement la description et les détails.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <QuickImageUpload
+                onImageSelect={setSelectedImageForAnalysis}
+                selectedFile={selectedImageForAnalysis}
+                onClear={handleClearAnalysis}
+              />
+
+              <ImageAnalysis
+                imageFile={selectedImageForAnalysis}
+                missingPersonName={`${watch('firstName') || ''} ${watch('lastName') || ''}`.trim()}
+                onAnalysisComplete={handleAnalysisComplete}
+                onClearAnalysis={handleClearAnalysis}
+              />
+
+              <GeminiSetupHelper />
+            </div>
+          </CardContent>
+        </Card>
         {/* Informations sur la personne disparue */}
         <Card>
           <CardHeader>
@@ -357,7 +429,15 @@ export const ReportForm: React.FC = () => {
         {/* Description */}
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Description & circonstances</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Description & circonstances</h2>
+              {fieldsAutoFilled && (
+                <div className="flex items-center space-x-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Champs remplis automatiquement</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
