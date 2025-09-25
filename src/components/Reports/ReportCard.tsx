@@ -95,102 +95,121 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
 
   return (
     <Link to={`/rapports/${report.id}`}>
-      <Card variant="elevated" className="h-full hover:shadow-strong transition-all duration-300 group cursor-pointer">
+      <Card variant="cyber" className="h-full hover:shadow-neon-green transition-all duration-300 group cursor-pointer" glow>
         <CardContent className="p-0">
           <div className="flex flex-col h-full">
-            {/* Image */}
-            <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl overflow-hidden">
+            {/* Image futuriste */}
+            <div className="relative aspect-square bg-gradient-to-br from-dark-800 to-dark-700 rounded-t-2xl overflow-hidden border-b border-neon-green/30">
+              {/* Effet de scan en arrière-plan */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-neon-green/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-2000"></div>
+              
               {report.photo ? (
                 <img
                   src={report.photo}
                   alt={`${report.firstName} ${report.lastName}`}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-white"
-                  style={{ backgroundColor: "#fff" }}
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-dark-900 relative z-10"
+                  style={{ backgroundColor: "#0a0a0a" }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <User className="h-20 w-20 text-gray-400" />
+                <div className="w-full h-full flex items-center justify-center relative z-10">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-neon-green/20 rounded-full blur-lg"></div>
+                    <User className="h-20 w-20 text-neon-green relative z-10" />
+                  </div>
                 </div>
               )}
               
-              {/* Badge de statut */}
-              <div className="absolute top-4 right-4 flex flex-col gap-2">
+              {/* Badge de statut futuriste */}
+              <div className="absolute top-4 right-4 flex flex-col gap-2 relative z-20">
                 <CaseTypeBadge 
                   caseType={report.caseType} 
                   priority={report.priority}
                   isEmergency={report.isEmergency}
                 />
-                <Badge variant={report.status === 'active' ? 'error' : 'success'} size="sm">
-                  {report.status === 'active' ? 'Disparu' : 'Retrouvé'}
+                <Badge 
+                  variant={report.status === 'active' ? 'error' : 'success'} 
+                  size="sm"
+                  glow={report.status === 'active'}
+                  pulse={report.isEmergency}
+                >
+                  {report.status === 'active' ? 'DISPARU' : 'RETROUVÉ'}
                 </Badge>
               </div>
 
-              {/* Badge nombre de jours */}
+              {/* Badge nombre de jours futuriste */}
               {daysSinceMissing > 0 && (
-                <div className="absolute bottom-4 left-4">
-                  <div className="bg-black/80 text-white px-3 py-1 rounded-lg text-sm font-medium backdrop-blur-sm">
-                    {daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}
+                <div className="absolute bottom-4 left-4 relative z-20">
+                  <div className="bg-dark-900/90 text-neon-green px-3 py-1 rounded-lg text-sm font-mono font-bold backdrop-blur-sm border border-neon-green/30">
+                    {daysSinceMissing} J{daysSinceMissing !== 1 ? 'S' : ''}
                   </div>
                 </div>
               )}
 
-              {/* Overlay dégradé */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {/* Overlay futuriste */}
+              <div className="absolute inset-0 bg-gradient-to-t from-dark-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 relative z-10" />
+              
+              {/* Lignes de données */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300">
+                <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neon-green to-transparent animate-scan-line"></div>
+                <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neon-blue to-transparent animate-scan-line" style={{ animationDelay: '1s' }}></div>
+              </div>
             </div>
             
-            {/* Content */}
-            <div className="p-6 flex-1 flex flex-col">
+            {/* Content futuriste */}
+            <div className="p-6 flex-1 flex flex-col bg-dark-800/30">
               <div className="flex-1">
-                <h3 className="font-bold text-xl text-gray-900 group-hover:text-primary-600 transition-colors mb-2">
+                <h3 className="font-display font-bold text-xl text-white group-hover:text-neon-green transition-colors mb-3 tracking-wider">
                   {report.firstName} {report.lastName}
                 </h3>
                 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <User className="h-4 w-4 mr-2 text-gray-400" />
-                    <span>{report.age} ans • {report.gender}</span>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center text-sm text-dark-300 font-mono">
+                    <User className="h-4 w-4 mr-3 text-neon-blue" />
+                    <span>{report.age} ANS • {report.gender.toUpperCase()}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                    <span>{report.locationDisappeared.city}, {report.locationDisappeared.state}</span>
+                  <div className="flex items-center text-sm text-dark-300 font-mono">
+                    <MapPin className="h-4 w-4 mr-3 text-neon-green" />
+                    <span>{report.locationDisappeared.city.toUpperCase()}, {report.locationDisappeared.state.toUpperCase()}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                    <span>Disparu le {new Date(report.dateDisappeared).toLocaleDateString()}</span>
+                  <div className="flex items-center text-sm text-dark-300 font-mono">
+                    <Calendar className="h-4 w-4 mr-3 text-neon-purple" />
+                    <span>DISPARU LE {new Date(report.dateDisappeared).toLocaleDateString('fr-FR').toUpperCase()}</span>
                   </div>
                 </div>
                 
-                <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-                  {report.description}
-                </p>
+                <div className="p-3 bg-dark-700/50 rounded-lg border border-dark-600/30">
+                  <p className="text-sm text-dark-200 line-clamp-3 leading-relaxed font-mono">
+                    {report.description}
+                  </p>
+                </div>
               </div>
               
-              {/* Actions */}
+              {/* Actions futuristes */}
               <div className="mt-6 flex justify-between items-center">
-                <div className="text-xs text-gray-500">
-                  ID: {report.id.slice(0, 8)}...
+                <div className="text-xs text-dark-400 font-mono">
+                  ID: {report.id.slice(0, 8).toUpperCase()}...
                 </div>
                 
                 <div className="flex items-center space-x-2">
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="cyber"
                     onClick={handleShare}
                     className="flex items-center space-x-1"
                   >
                     <Share className="h-4 w-4" />
-                    <span>Partager</span>
+                    <span>PARTAGER</span>
                   </Button>
                   
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="neon"
                     className="flex items-center space-x-1"
                   >
                     <Eye className="h-4 w-4" />
-                    <span>Voir</span>
+                    <span>VOIR</span>
                   </Button>
                 </div>
               </div>

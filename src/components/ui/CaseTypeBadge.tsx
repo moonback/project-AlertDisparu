@@ -10,33 +10,33 @@ interface CaseTypeBadgeProps {
 }
 
 const caseTypeLabels: Record<CaseType, string> = {
-  disappearance: 'Disparition',
-  runaway: 'Fugue',
-  abduction: 'Enlèvement',
-  missing_adult: 'Adulte disparu',
-  missing_child: 'Enfant disparu'
+  disappearance: 'DISPARITION',
+  runaway: 'FUGUE',
+  abduction: 'ENLÈVEMENT',
+  missing_adult: 'ADULTE DISPARU',
+  missing_child: 'ENFANT DISPARU'
 };
 
-const caseTypeColors: Record<CaseType, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  disappearance: 'default',
-  runaway: 'secondary',
-  abduction: 'destructive',
-  missing_adult: 'outline',
-  missing_child: 'destructive'
+const caseTypeColors: Record<CaseType, 'default' | 'secondary' | 'danger' | 'outline' | 'neon' | 'cyber' | 'glass'> = {
+  disappearance: 'neon',
+  runaway: 'cyber',
+  abduction: 'danger',
+  missing_adult: 'glass',
+  missing_child: 'danger'
 };
 
-const priorityColors: Record<CasePriority, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const priorityColors: Record<CasePriority, 'default' | 'secondary' | 'danger' | 'outline' | 'neon' | 'cyber' | 'glass'> = {
   low: 'outline',
   medium: 'default',
-  high: 'secondary',
-  critical: 'destructive'
+  high: 'cyber',
+  critical: 'danger'
 };
 
 const priorityLabels: Record<CasePriority, string> = {
-  low: 'Faible',
-  medium: 'Moyenne',
-  high: 'Élevée',
-  critical: 'Critique'
+  low: 'FAIBLE',
+  medium: 'MOYENNE',
+  high: 'ÉLEVÉE',
+  critical: 'CRITIQUE'
 };
 
 export const CaseTypeBadge: React.FC<CaseTypeBadgeProps> = ({
@@ -47,18 +47,33 @@ export const CaseTypeBadge: React.FC<CaseTypeBadgeProps> = ({
 }) => {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Badge variant={caseTypeColors[caseType]} size="sm">
+      <Badge 
+        variant={caseTypeColors[caseType]} 
+        size="sm"
+        glow={caseType === 'abduction' || caseType === 'missing_child'}
+        pulse={isEmergency}
+      >
         {caseTypeLabels[caseType]}
       </Badge>
       
       {priority && (
-        <Badge variant={priorityColors[priority]} size="sm">
+        <Badge 
+          variant={priorityColors[priority]} 
+          size="sm"
+          glow={priority === 'critical'}
+          pulse={priority === 'critical' || isEmergency}
+        >
           {priorityLabels[priority]}
         </Badge>
       )}
       
       {isEmergency && (
-        <Badge variant="destructive" size="sm">
+        <Badge 
+          variant="danger" 
+          size="sm"
+          glow
+          pulse
+        >
           URGENCE
         </Badge>
       )}
