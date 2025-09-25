@@ -56,8 +56,8 @@ export const MissingPersonsMap: React.FC = () => {
     }
   }, [filteredReports, calculateDistance]);
 
-  // Default center (United States)
-  const defaultCenter: [number, number] = [39.8283, -98.5795];
+  // Default center (France)
+  const defaultCenter: [number, number] = [46.2276, 2.2137];
   const mapCenter: [number, number] = userLocation 
     ? [userLocation.lat, userLocation.lng]
     : defaultCenter;
@@ -85,12 +85,12 @@ export const MissingPersonsMap: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Missing Persons Map</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Carte des disparitions</h1>
         <p className="mt-2 text-gray-600">
-          Interactive map showing locations where people were last seen. 
+          Carte interactive montrant les lieux où les personnes ont été vues pour la dernière fois. 
           {userLocation && nearbyReports.length > 0 && (
             <span className="text-amber-600 font-medium ml-2">
-              ⚠️ {nearbyReports.length} missing person{nearbyReports.length !== 1 ? 's' : ''} near your location
+              ⚠️ {nearbyReports.length} personne{nearbyReports.length !== 1 ? 's' : ''} disparue{nearbyReports.length !== 1 ? 's' : ''} près de votre position
             </span>
           )}
         </p>
@@ -101,11 +101,11 @@ export const MissingPersonsMap: React.FC = () => {
           <div className="flex items-center mb-2">
             <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
             <h3 className="text-sm font-medium text-amber-800">
-              Missing persons in your area
+              Personnes disparues dans votre zone
             </h3>
           </div>
           <p className="text-sm text-amber-700">
-            There {nearbyReports.length === 1 ? 'is' : 'are'} {nearbyReports.length} missing person{nearbyReports.length !== 1 ? 's' : ''} reported within 50km of your current location. Please keep an eye out and report any sightings to local authorities.
+            Il y a {nearbyReports.length} personne{nearbyReports.length !== 1 ? 's' : ''} disparue{nearbyReports.length !== 1 ? 's' : ''} signalée{nearbyReports.length !== 1 ? 's' : ''} dans un rayon de 50km de votre position actuelle. Restez vigilant et signalez toute observation aux autorités locales.
           </p>
         </div>
       )}
@@ -126,8 +126,8 @@ export const MissingPersonsMap: React.FC = () => {
             <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
               <Popup>
                 <div className="text-center">
-                  <h3 className="font-semibold">Your Location</h3>
-                  <p className="text-sm text-gray-600">Current position</p>
+                  <h3 className="font-semibold">Votre position</h3>
+                  <p className="text-sm text-gray-600">Position actuelle</p>
                 </div>
               </Popup>
             </Marker>
@@ -163,14 +163,14 @@ export const MissingPersonsMap: React.FC = () => {
                         {report.firstName} {report.lastName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {report.age} years old • {report.gender}
+                        {report.age} ans • {report.gender === 'male' ? 'Homme' : report.gender === 'female' ? 'Femme' : 'Autre'}
                       </p>
                       <div className="flex items-center text-sm text-gray-500 mt-1">
                         <MapPin className="h-3 w-3 mr-1" />
                         <span>{report.locationDisappeared.city}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Last seen: {new Date(report.dateDisappeared).toLocaleDateString()}
+                        Vu pour la dernière fois : {new Date(report.dateDisappeared).toLocaleDateString('fr-FR')}
                       </p>
                       
                       <Link to={`/rapports/${report.id}`}>
@@ -192,20 +192,20 @@ export const MissingPersonsMap: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-              <span>Missing Person Location</span>
+              <span>Position de disparition</span>
             </div>
             {userLocation && (
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                <span>Your Location</span>
+                <span>Votre position</span>
               </div>
             )}
           </div>
           
           <div className="text-right">
-            <p>Total Reports: {filteredReports.length}</p>
+            <p>Rapports totaux : {filteredReports.length}</p>
             {userLocation && (
-              <p>Nearby Alerts: {nearbyReports.length}</p>
+              <p>Alertes à proximité : {nearbyReports.length}</p>
             )}
           </div>
         </div>
