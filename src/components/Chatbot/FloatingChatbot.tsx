@@ -252,8 +252,17 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       }
       
        const response = await chatbotService.processMessage(userMessage);
+       
+       // Synchroniser l'ID de conversation si une nouvelle a été créée
+       const serviceConversationId = chatbotService.getCurrentConversationId();
+       if (serviceConversationId && serviceConversationId !== activeConversationId) {
+         console.log('🔄 Synchronisation nouvelle conversation:', serviceConversationId);
+         setActiveConversationId(serviceConversationId);
+       }
+       
        setMessages(prev => {
          const newMessages = [...prev, response];
+         console.log('💾 Messages mis à jour:', newMessages.length, newMessages);
          
          // Lire la réponse avec TTS si activé
          if (ttsEnabled && response.role === 'assistant') {

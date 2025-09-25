@@ -500,6 +500,33 @@ export class ChatbotService {
 
       if (result.error) {
         console.error('❌ Erreur lors de la sauvegarde du message:', result.error);
+        
+        // Si la conversation n'existe pas, essayer de la recréer
+        if (result.error.code === 'P0001' && result.error.message.includes('Conversation not found')) {
+          console.log('🔄 Tentative de recréation de la conversation...');
+          try {
+            const newConversationId = await this.createConversation();
+            this.context.currentConversationId = newConversationId;
+            console.log('✅ Conversation recréée:', newConversationId);
+            
+            // Réessayer la sauvegarde
+            const retryResult = await supabase.rpc('add_message_to_conversation', {
+              conv_id: newConversationId,
+              msg_role: message.role,
+              msg_content: message.content,
+              msg_metadata: message.data || {},
+              user_uuid: this.context.user.id
+            });
+            
+            if (retryResult.error) {
+              console.error('❌ Erreur persistante lors de la sauvegarde:', retryResult.error);
+            } else {
+              console.log('✅ Message sauvegardé après recréation de conversation:', retryResult.data);
+            }
+          } catch (retryError) {
+            console.error('❌ Erreur lors de la recréation de conversation:', retryError);
+          }
+        }
       } else {
         console.log('✅ Message sauvegardé avec succès:', result.data);
       }
@@ -602,7 +629,9 @@ export class ChatbotService {
     if (!this.context.currentConversationId) {
       try {
         console.log('⚠️ Aucune conversation active, création d\'une nouvelle...');
-        this.context.currentConversationId = await this.createConversation();
+        const newConversationId = await this.createConversation();
+        this.context.currentConversationId = newConversationId;
+        console.log('✅ Nouvelle conversation créée et définie comme active:', newConversationId);
       } catch (error) {
         console.error('Erreur lors de la création de la conversation:', error);
         throw new Error('Impossible de créer une conversation');
