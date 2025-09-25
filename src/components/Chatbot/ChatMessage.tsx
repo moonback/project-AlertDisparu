@@ -117,13 +117,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onCopy }) => 
         </div>
 
         {/* Données supplémentaires si disponibles */}
-        {message.data && (
+        {/* {message.data && (
           <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
             <div className="text-xs text-blue-800">
               Données: {JSON.stringify(message.data, null, 2)}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Minimize2, Maximize2, HelpCircle, Database, MessageSquare } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Minimize2, Maximize2, HelpCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { ChatbotService, ChatMessage } from '../../services/chatbotService';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/cn';
 import { QuickSuggestions } from './QuickSuggestions';
 import { ChatMessage as ChatMessageComponent } from './ChatMessage';
-import { DataInsights } from './DataInsights';
 import { ConversationList } from './ConversationList';
 import { SmartSuggestions } from './SmartSuggestions';
 
@@ -20,7 +19,6 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showDataInsights, setShowDataInsights] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
   const [showSmartSuggestions, setShowSmartSuggestions] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
@@ -36,6 +34,12 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     if (user) {
       chatbotService.updateUserContext(user);
       console.log('✅ Utilisateur configuré dans le chatbot:', user.id);
+      
+      // Synchroniser la conversation active avec le service
+      if (activeConversationId) {
+        console.log('🔄 Synchronisation conversation active avec le service:', activeConversationId);
+        chatbotService.context.currentConversationId = activeConversationId;
+      }
     } else {
       // Réinitialiser le service si l'utilisateur se déconnecte
       chatbotService.updateUserContext(null);
@@ -44,7 +48,7 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       setIsFirstMessage(true);
       console.log('❌ Utilisateur déconnecté du chatbot');
     }
-  }, [user, chatbotService]);
+  }, [user, chatbotService, activeConversationId]);
 
   // Auto-scroll vers le bas
   const scrollToBottom = () => {
@@ -69,15 +73,32 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     setShowSmartSuggestions(false);
 
     const userMessage = inputValue.trim();
+    console.log('📤 Envoi du message:', userMessage);
+    console.log('🆔 Conversation active:', activeConversationId);
+    console.log('🔧 Service chatbot:', chatbotService);
+    console.log('🔧 Service context:', chatbotService.context);
+    
     setInputValue('');
     setShowSuggestions(false);
-    setShowDataInsights(false);
     setShowConversations(false);
     setIsLoading(true);
 
     try {
+      console.log('🚀 Appel à processMessage...');
+      
+      // S'assurer que le service utilise la conversation active de l'interface
+      if (activeConversationId && !chatbotService.context.currentConversationId) {
+        console.log('🔄 Forcer la conversation active dans le service:', activeConversationId);
+        chatbotService.context.currentConversationId = activeConversationId;
+      }
+      
       const response = await chatbotService.processMessage(userMessage);
-      setMessages(prev => [...prev, response]);
+      console.log('📨 Réponse reçue:', response);
+      setMessages(prev => {
+        const newMessages = [...prev, response];
+        console.log('💾 Messages mis à jour:', newMessages.length, newMessages);
+        return newMessages;
+      });
       
       // Récupérer l'ID de conversation depuis le service
       const currentConvId = response.conversationId || activeConversationId;
@@ -117,18 +138,10 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
     setShowSuggestions(false);
-    setShowDataInsights(false);
     setShowConversations(false);
     inputRef.current?.focus();
   };
 
-  const handleInsightClick = (insight: string) => {
-    setInputValue(insight);
-    setShowSuggestions(false);
-    setShowDataInsights(false);
-    setShowConversations(false);
-    inputRef.current?.focus();
-  };
 
   const handleNewConversation = async () => {
     try {
@@ -138,7 +151,6 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       setShowConversations(false);
       setShowSmartSuggestions(true);
       setShowSuggestions(true);
-      setShowDataInsights(false);
       
       // Créer une nouvelle conversation
       const newConversationId = await chatbotService.createConversation();
@@ -150,11 +162,13 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
 
   const handleConversationSelect = async (conversationId: string) => {
     try {
+      console.log('🔄 Chargement de la conversation:', conversationId);
       setActiveConversationId(conversationId);
       setShowConversations(false);
       
       // Charger les messages de la conversation
       const conversationMessages = await chatbotService.loadConversation(conversationId);
+      console.log('📨 Messages chargés:', conversationMessages.length, conversationMessages);
       setMessages(conversationMessages);
       setIsFirstMessage(conversationMessages.length <= 1);
     } catch (error) {
@@ -187,37 +201,57 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     setActiveConversationId(undefined);
   };
 
+  const handleDeleteAllConversations = async () => {
+    if (!user) return;
+    
+    // Confirmation avant suppression
+    const confirmed = window.confirm(
+      'Êtes-vous sûr de vouloir supprimer TOUTES vos conversations ? Cette action est irréversible.'
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      await chatbotService.deleteAllConversations();
+      
+      // Réinitialiser l'interface
+      setMessages([]);
+      setActiveConversationId(undefined);
+      setIsFirstMessage(true);
+      setShowConversations(false);
+      setShowSmartSuggestions(true);
+      setShowSuggestions(true);
+      
+      console.log('✅ Toutes les conversations ont été supprimées');
+    } catch (error) {
+      console.error('Erreur lors de la suppression des conversations:', error);
+      alert('Erreur lors de la suppression des conversations. Veuillez réessayer.');
+    }
+  };
+
   const toggleSuggestions = () => {
     setShowSuggestions(!showSuggestions);
-    setShowDataInsights(false);
     setShowConversations(false);
     setShowSmartSuggestions(false);
   };
 
-  const toggleDataInsights = () => {
-    setShowDataInsights(!showDataInsights);
-    setShowSuggestions(false);
-    setShowConversations(false);
-    setShowSmartSuggestions(false);
-  };
 
   const toggleConversations = () => {
     setShowConversations(!showConversations);
     setShowSuggestions(false);
-    setShowDataInsights(false);
     setShowSmartSuggestions(false);
   };
 
   const toggleSmartSuggestions = () => {
     setShowSmartSuggestions(!showSmartSuggestions);
     setShowSuggestions(false);
-    setShowDataInsights(false);
     setShowConversations(false);
   };
 
   // Message d'accueil
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      console.log('👋 Affichage du message d\'accueil');
       const welcomeMessage: ChatMessage = {
         id: 'welcome',
         role: 'assistant',
@@ -326,16 +360,6 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                   >
                     <HelpCircle size={16} />
                   </button>
-                  <button
-                    onClick={toggleDataInsights}
-                    className={cn(
-                      "text-blue-200 hover:text-white transition-colors",
-                      showDataInsights && "text-white"
-                    )}
-                    aria-label="Afficher les données"
-                  >
-                    <Database size={16} />
-                  </button>
                 </>
               )}
               <button
@@ -360,13 +384,25 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
               {/* Zone principale - Messages, Conversations, Suggestions ou Données */}
               <div className="flex-1 overflow-hidden">
                 {showConversations ? (
-                  <ConversationList
-                    chatbotService={chatbotService}
-                    onConversationSelect={handleConversationSelect}
-                    onNewConversation={handleNewConversation}
-                    activeConversationId={activeConversationId}
-                    className="h-full"
-                  />
+                  <div className="h-full flex flex-col">
+                    <ConversationList
+                      chatbotService={chatbotService}
+                      onConversationSelect={handleConversationSelect}
+                      onNewConversation={handleNewConversation}
+                      activeConversationId={activeConversationId}
+                      className="flex-1"
+                    />
+                    {/* Bouton pour effacer toutes les conversations */}
+                    <div className="border-t border-gray-200 p-3 bg-red-50">
+                      <button
+                        onClick={handleDeleteAllConversations}
+                        className="w-full flex items-center justify-center space-x-2 text-red-600 hover:text-red-800 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <Trash2 size={16} />
+                        <span>Effacer toutes les conversations</span>
+                      </button>
+                    </div>
+                  </div>
                 ) : showSuggestions && messages.length <= 1 ? (
                   <div className="h-full overflow-y-auto p-4">
                     <QuickSuggestions 
@@ -374,16 +410,11 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                       disabled={isLoading}
                     />
                   </div>
-                ) : showDataInsights && messages.length <= 1 ? (
-                  <div className="h-full overflow-y-auto p-4">
-                    <DataInsights 
-                      onInsightClick={handleInsightClick}
-                    />
-                  </div>
                 ) : (
                   <>
                     {/* Messages */}
                     <div className="h-[400px] overflow-y-auto p-4 space-y-4">
+                      
                       {messages.map((message) => (
                         <ChatMessageComponent
                           key={message.id}
@@ -423,7 +454,7 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                     </div>
 
                     {/* Actions rapides en bas */}
-                    {!showSuggestions && !showDataInsights && !showConversations && (
+                    {!showSuggestions && !showConversations && (
                       <div className="border-t border-gray-200 p-2">
                         <div className="flex space-x-1">
                           <button
@@ -443,12 +474,6 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                             className="flex-1 text-xs text-blue-600 hover:text-blue-800 transition-colors py-1"
                           >
                             💡 Suggestions
-                          </button>
-                          <button
-                            onClick={toggleDataInsights}
-                            className="flex-1 text-xs text-green-600 hover:text-green-800 transition-colors py-1"
-                          >
-                            📊 Données
                           </button>
                         </div>
                       </div>

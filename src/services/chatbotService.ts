@@ -365,6 +365,8 @@ export class ChatbotService {
     }
 
     try {
+      console.log('🔍 Récupération des messages pour la conversation:', conversationId, 'utilisateur:', this.context.user.id);
+      
       const { data, error } = await supabase
         .rpc('get_conversation_messages', {
           conv_id: conversationId,
@@ -376,13 +378,18 @@ export class ChatbotService {
         throw error;
       }
 
-      return (data || []).map((msg: Record<string, unknown>) => ({
+      console.log('📊 Données brutes reçues:', data);
+
+      const messages = (data || []).map((msg: Record<string, unknown>) => ({
         id: msg.message_id as string,
         role: msg.role as 'user' | 'assistant',
         content: msg.content as string,
         timestamp: new Date(msg.created_at as string),
         data: msg.metadata as Record<string, unknown>
       }));
+
+      console.log('📨 Messages transformés:', messages);
+      return messages;
     } catch (error) {
       console.error('Erreur lors de la récupération des messages:', error);
       return [];
@@ -398,6 +405,8 @@ export class ChatbotService {
     }
 
     try {
+      console.log('🆕 Création d\'une nouvelle conversation:', title, 'pour utilisateur:', this.context.user.id);
+      
       const { data, error } = await supabase
         .rpc('create_new_conversation', {
           user_uuid: this.context.user.id,
@@ -405,13 +414,14 @@ export class ChatbotService {
         });
 
       if (error) {
-        console.error('Erreur lors de la création de la conversation:', error);
+        console.error('❌ Erreur lors de la création de la conversation:', error);
         throw error;
       }
 
+      console.log('✅ Nouvelle conversation créée avec l\'ID:', data);
       return data;
     } catch (error) {
-      console.error('Erreur lors de la création de la conversation:', error);
+      console.error('❌ Erreur lors de la création de la conversation:', error);
       throw error;
     }
   }
@@ -425,6 +435,8 @@ export class ChatbotService {
     }
 
     try {
+      console.log('🔄 Activation de la conversation:', conversationId, 'pour utilisateur:', this.context.user.id);
+      
       // Désactiver toutes les autres conversations de l'utilisateur
       await supabase
         .from('chatbot_conversations')
@@ -439,13 +451,14 @@ export class ChatbotService {
         .eq('user_id', this.context.user.id);
 
       if (error) {
-        console.error('Erreur lors du changement de conversation:', error);
+        console.error('❌ Erreur lors du changement de conversation:', error);
         throw error;
       }
 
       this.context.currentConversationId = conversationId;
+      console.log('✅ Conversation activée:', conversationId);
     } catch (error) {
-      console.error('Erreur lors du changement de conversation:', error);
+      console.error('❌ Erreur lors du changement de conversation:', error);
       throw error;
     }
   }
@@ -460,15 +473,24 @@ export class ChatbotService {
     }
 
     try {
-      await supabase.rpc('add_message_to_conversation', {
+      console.log('💾 Sauvegarde du message:', message.role, message.content.substring(0, 50) + '...', 'dans la conversation:', this.context.currentConversationId);
+      console.log('🔍 Contexte utilisateur:', this.context.user?.id);
+      
+      const result = await supabase.rpc('add_message_to_conversation', {
         conv_id: this.context.currentConversationId,
         msg_role: message.role,
         msg_content: message.content,
         msg_metadata: message.data || {},
         user_uuid: this.context.user.id
       });
+
+      if (result.error) {
+        console.error('❌ Erreur lors de la sauvegarde du message:', result.error);
+      } else {
+        console.log('✅ Message sauvegardé avec succès:', result.data);
+      }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde du message:', error);
+      console.error('❌ Erreur lors de la sauvegarde du message:', error);
     }
   }
 
@@ -528,17 +550,51 @@ export class ChatbotService {
   }
 
   /**
+   * Supprime toutes les conversations de l'utilisateur
+   */
+  async deleteAllConversations(): Promise<void> {
+    if (!this.context.user) {
+      throw new Error('Utilisateur non connecté');
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chatbot_conversations')
+        .delete()
+        .eq('user_id', this.context.user.id);
+
+      if (error) {
+        console.error('Erreur lors de la suppression de toutes les conversations:', error);
+        throw error;
+      }
+
+      // Réinitialiser la conversation active
+      this.context.currentConversationId = undefined;
+      console.log('✅ Toutes les conversations ont été supprimées');
+    } catch (error) {
+      console.error('Erreur lors de la suppression de toutes les conversations:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Traite un message utilisateur et génère une réponse
    */
   async processMessage(message: string): Promise<ChatMessage> {
+    console.log('🚀 ProcessMessage appelé avec conversation active:', this.context.currentConversationId);
+    console.log('🚀 FORCE LOG - Service version:', new Date().toISOString());
+    
     // S'assurer qu'une conversation est active
     if (!this.context.currentConversationId) {
       try {
+        console.log('⚠️ Aucune conversation active, création d\'une nouvelle...');
         this.context.currentConversationId = await this.createConversation();
       } catch (error) {
         console.error('Erreur lors de la création de la conversation:', error);
         throw new Error('Impossible de créer une conversation');
       }
+    } else {
+      console.log('✅ Conversation active trouvée:', this.context.currentConversationId);
     }
 
     const userMessage: ChatMessage = {
@@ -598,9 +654,12 @@ RÉPONSE:`;
         conversationId: this.context.currentConversationId
       };
 
+      console.log('📝 Message assistant créé avec conversationId:', assistantMessage.conversationId);
+
       // Sauvegarder la réponse de l'assistant
       await this.saveMessage(assistantMessage);
 
+      console.log('📤 Retour du message assistant:', assistantMessage);
       return assistantMessage;
 
     } catch (error) {
