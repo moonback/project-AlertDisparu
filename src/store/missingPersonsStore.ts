@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { MissingPerson, SearchFilters, InvestigationObservation } from '../types';
+import { MissingPerson, SearchFilters, InvestigationObservation, SavedResolutionScenario } from '../types';
 import { supabase } from '../lib/supabase';
+import { SavedScenariosCache } from '../services/scenarioCache';
 import { useAuthStore } from './authStore';
 
 interface MissingPersonsState {
@@ -21,6 +22,11 @@ interface MissingPersonsState {
   addObservation: (observation: Omit<InvestigationObservation, 'id' | 'createdAt' | 'updatedAt' | 'isVerified' | 'verifiedBy' | 'verifiedAt' | 'createdBy' | 'distanceFromDisappearance'>) => Promise<{ success: boolean; error?: string; id?: string }>;
   updateObservation: (id: string, updates: Partial<InvestigationObservation>) => Promise<{ success: boolean; error?: string }>;
   deleteObservation: (id: string) => Promise<{ success: boolean; error?: string }>;
+  // Méthodes pour les scénarios de résolution
+  getResolutionScenariosByReportId: (reportId: string) => Promise<SavedResolutionScenario[]>;
+  addResolutionScenario: (scenario: Omit<SavedResolutionScenario, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'generationDate' | 'aiModelUsed' | 'generationVersion'>) => Promise<{ success: boolean; error?: string; id?: string }>;
+  updateResolutionScenario: (id: string, updates: Partial<SavedResolutionScenario>) => Promise<{ success: boolean; error?: string }>;
+  deleteResolutionScenario: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // Pas de données mock en prod: on charge depuis Supabase
@@ -619,6 +625,213 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
       return { success: true };
     } catch (err) {
       console.error('💥 Exception dans deleteObservation:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
+  },
+
+  getResolutionScenariosByReportId: async (reportId) => {
+    console.log('🔍 Chargement des scénarios de résolution pour le rapport:', reportId);
+    
+    // Vérifier le cache d'abord
+    const cached = SavedScenariosCache.get(reportId);
+    if (cached) {
+      console.log('🎯 Utilisation du cache pour les scénarios sauvegardés');
+      return cached;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('resolution_scenarios')
+        .select('*')
+        .eq('missing_person_id', reportId)
+        .order('generation_date', { ascending: false });
+
+      if (error) {
+        console.error('❌ Erreur chargement scénarios:', error);
+        throw error;
+      }
+
+      const mapped: SavedResolutionScenario[] = (data || []).map(row => ({
+        id: row.id,
+        missingPersonId: row.missing_person_id,
+        scenario1: {
+          title: row.scenario1_title,
+          description: row.scenario1_description,
+          probability: row.scenario1_probability,
+          actions: row.scenario1_actions || [],
+          timeline: row.scenario1_timeline,
+          keyFactors: row.scenario1_key_factors || [],
+          resources: row.scenario1_resources || []
+        },
+        scenario2: {
+          title: row.scenario2_title,
+          description: row.scenario2_description,
+          probability: row.scenario2_probability,
+          actions: row.scenario2_actions || [],
+          timeline: row.scenario2_timeline,
+          keyFactors: row.scenario2_key_factors || [],
+          resources: row.scenario2_resources || []
+        },
+        summary: row.summary,
+        recommendations: row.recommendations || [],
+        generationDate: row.generation_date,
+        aiModelUsed: row.ai_model_used,
+        generationVersion: row.generation_version,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by || undefined
+      }));
+
+      // Mettre en cache le résultat
+      SavedScenariosCache.set(reportId, mapped);
+      
+      return mapped;
+    } catch (err) {
+      console.error('💥 Exception dans getResolutionScenariosByReportId:', err);
+      throw err;
+    }
+  },
+
+  addResolutionScenario: async (scenarioData) => {
+    console.log('➕ Ajout d\'un scénario de résolution:', scenarioData);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const payload = {
+        missing_person_id: scenarioData.missingPersonId,
+        scenario1_title: scenarioData.scenario1.title,
+        scenario1_description: scenarioData.scenario1.description,
+        scenario1_probability: scenarioData.scenario1.probability,
+        scenario1_actions: scenarioData.scenario1.actions,
+        scenario1_timeline: scenarioData.scenario1.timeline,
+        scenario1_key_factors: scenarioData.scenario1.keyFactors,
+        scenario1_resources: scenarioData.scenario1.resources,
+        scenario2_title: scenarioData.scenario2.title,
+        scenario2_description: scenarioData.scenario2.description,
+        scenario2_probability: scenarioData.scenario2.probability,
+        scenario2_actions: scenarioData.scenario2.actions,
+        scenario2_timeline: scenarioData.scenario2.timeline,
+        scenario2_key_factors: scenarioData.scenario2.keyFactors,
+        scenario2_resources: scenarioData.scenario2.resources,
+        summary: scenarioData.summary,
+        recommendations: scenarioData.recommendations,
+        generation_date: new Date().toISOString(),
+        ai_model_used: 'gemini-1.5-flash',
+        generation_version: '1.0',
+        created_by: authState.user.id
+      };
+
+      const { data, error } = await supabase
+        .from('resolution_scenarios')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('❌ Erreur insertion scénario:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Invalider le cache pour ce rapport
+      SavedScenariosCache.invalidate(scenarioData.missingPersonId);
+
+      return { success: true, id: data?.id };
+    } catch (err) {
+      console.error('💥 Exception dans addResolutionScenario:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
+  },
+
+  updateResolutionScenario: async (id, updates) => {
+    console.log('🔄 Mise à jour du scénario de résolution:', id, updates);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      // Mapper les champs selon la structure de la base de données
+      if (updates.scenario1) {
+        if (updates.scenario1.title) updateData.scenario1_title = updates.scenario1.title;
+        if (updates.scenario1.description) updateData.scenario1_description = updates.scenario1.description;
+        if (updates.scenario1.probability) updateData.scenario1_probability = updates.scenario1.probability;
+        if (updates.scenario1.actions) updateData.scenario1_actions = updates.scenario1.actions;
+        if (updates.scenario1.timeline) updateData.scenario1_timeline = updates.scenario1.timeline;
+        if (updates.scenario1.keyFactors) updateData.scenario1_key_factors = updates.scenario1.keyFactors;
+        if (updates.scenario1.resources) updateData.scenario1_resources = updates.scenario1.resources;
+      }
+
+      if (updates.scenario2) {
+        if (updates.scenario2.title) updateData.scenario2_title = updates.scenario2.title;
+        if (updates.scenario2.description) updateData.scenario2_description = updates.scenario2.description;
+        if (updates.scenario2.probability) updateData.scenario2_probability = updates.scenario2.probability;
+        if (updates.scenario2.actions) updateData.scenario2_actions = updates.scenario2.actions;
+        if (updates.scenario2.timeline) updateData.scenario2_timeline = updates.scenario2.timeline;
+        if (updates.scenario2.keyFactors) updateData.scenario2_key_factors = updates.scenario2.keyFactors;
+        if (updates.scenario2.resources) updateData.scenario2_resources = updates.scenario2.resources;
+      }
+
+      if (updates.summary) updateData.summary = updates.summary;
+      if (updates.recommendations) updateData.recommendations = updates.recommendations;
+
+      const { error } = await supabase
+        .from('resolution_scenarios')
+        .update(updateData)
+        .eq('id', id)
+        .eq('created_by', authState.user.id); // S'assurer que l'utilisateur peut seulement modifier ses propres scénarios
+
+      if (error) {
+        console.error('❌ Erreur mise à jour scénario:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Invalider le cache pour tous les rapports (car on ne connaît pas le rapportId ici)
+      // En production, on pourrait optimiser en passant le rapportId en paramètre
+      SavedScenariosCache.clear();
+
+      return { success: true };
+    } catch (err) {
+      console.error('💥 Exception dans updateResolutionScenario:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
+  },
+
+  deleteResolutionScenario: async (id) => {
+    console.log('🗑️ Suppression du scénario de résolution:', id);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const { error } = await supabase
+        .from('resolution_scenarios')
+        .delete()
+        .eq('id', id)
+        .eq('created_by', authState.user.id); // S'assurer que l'utilisateur peut seulement supprimer ses propres scénarios
+
+      if (error) {
+        console.error('❌ Erreur suppression scénario:', error);
+        return { success: false, error: error.message };
+      }
+
+      // Invalider le cache pour tous les rapports (car on ne connaît pas le rapportId ici)
+      // En production, on pourrait optimiser en passant le rapportId en paramètre
+      SavedScenariosCache.clear();
+
+      return { success: true };
+    } catch (err) {
+      console.error('💥 Exception dans deleteResolutionScenario:', err);
       return { success: false, error: `Erreur: ${err}` };
     }
   }

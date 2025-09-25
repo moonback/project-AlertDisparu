@@ -110,5 +110,37 @@ export interface InvestigationObservation {
   photoDescriptions?: string[]; // Descriptions des photos
 }
 
+// Types pour les scénarios de résolution
+export interface SavedResolutionScenario {
+  id: string;
+  missingPersonId: string;
+  scenario1: {
+    title: string;
+    description: string;
+    probability: 'low' | 'medium' | 'high';
+    actions: string[];
+    timeline: string;
+    keyFactors: string[];
+    resources: string[];
+  };
+  scenario2: {
+    title: string;
+    description: string;
+    probability: 'low' | 'medium' | 'high';
+    actions: string[];
+    timeline: string;
+    keyFactors: string[];
+    resources: string[];
+  };
+  summary: string;
+  recommendations: string[];
+  generationDate: string;
+  aiModelUsed: string;
+  generationVersion: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
+
 // Re-export des types d'analytics
 export * from './analytics';
