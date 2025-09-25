@@ -4,7 +4,7 @@ import { MissingPerson } from '../../types';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { MapPin, Calendar, User, Share, AlertTriangle, Eye, Clock } from 'lucide-react';
+import { MapPin, Calendar, User, Share, Eye, Clock } from 'lucide-react';
 import { CaseTypeBadge } from '../ui/CaseTypeBadge';
 
 interface ReportCardProps {
@@ -24,7 +24,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
           text: `Aidez à retrouver ${report.firstName} ${report.lastName}, vu pour la dernière fois à ${report.locationDisappeared.city}`,
           url: window.location.origin + `/rapports/${report.id}`
         });
-      } catch (err) {
+      } catch {
         copyToClipboard();
       }
     } else {
@@ -104,7 +104,8 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                 <img
                   src={report.photo}
                   alt={`${report.firstName} ${report.lastName}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-white"
+                  style={{ backgroundColor: "#fff" }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -112,7 +113,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                 </div>
               )}
               
-              {/* Status Badge */}
+              {/* Badge de statut */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <CaseTypeBadge 
                   caseType={report.caseType} 
@@ -124,7 +125,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                 </Badge>
               </div>
 
-              {/* Days missing badge */}
+              {/* Badge nombre de jours */}
               {daysSinceMissing > 0 && (
                 <div className="absolute bottom-4 left-4">
                   <div className="bg-black/80 text-white px-3 py-1 rounded-lg text-sm font-medium backdrop-blur-sm">
@@ -133,7 +134,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                 </div>
               )}
 
-              {/* Overlay gradient */}
+              {/* Overlay dégradé */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
             
