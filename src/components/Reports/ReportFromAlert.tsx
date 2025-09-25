@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Alert } from '../ui/Alert';
 import { QuickImageUpload } from '../ui/QuickImageUpload';
 import { useAlertPosterAnalysis } from '../../hooks/useAlertPosterAnalysis';
-import { AlertTriangle, FileText, Download, Wand2, CheckCircle } from 'lucide-react';
+import { useGeocoding } from '../../hooks/useGeocoding';
+import { AlertTriangle, FileText, Download, Wand2, CheckCircle, MapPin } from 'lucide-react';
 import { useMissingPersonsStore } from '../../store/missingPersonsStore';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
@@ -17,6 +18,8 @@ export const ReportFromAlert: React.FC = () => {
   const { isAnalyzing, result, error, analyze, clear } = useAlertPosterAnalysis();
   const { addReport } = useMissingPersonsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress, clearGeocoding } = useGeocoding();
+  const [geocodedLocation, setGeocodedLocation] = useState<{lat: number, lng: number} | null>(null);
 
   const handleAnalyze = async () => {
     if (!file) return;
@@ -26,7 +29,36 @@ export const ReportFromAlert: React.FC = () => {
   const handleClear = () => {
     setFile(null);
     clear();
+    clearGeocoding();
+    setGeocodedLocation(null);
   };
+
+  // Géocoder automatiquement le lieu d'enlèvement quand l'analyse est terminée
+  useEffect(() => {
+    console.log('🔍 useEffect géocodage déclenché:', { result, hasLocation: !!result?.abductedLocation });
+    if (result && result.abductedLocation) {
+      const locationToGeocode = result.abductedLocationDetails || result.abductedLocation;
+      console.log('🌍 Géocodage automatique du lieu:', locationToGeocode);
+      // Extraire la ville si elle est dans l'adresse
+      const city = result.abductedLocation || '';
+      geocodeAddress(locationToGeocode, city, '');
+    } else {
+      console.log('❌ Pas de lieu à géocoder:', { 
+        hasResult: !!result, 
+        hasLocation: !!result?.abductedLocation,
+        location: result?.abductedLocation,
+        locationDetails: result?.abductedLocationDetails 
+      });
+    }
+  }, [result]); // Supprimer geocodeAddress des dépendances
+
+  // Mettre à jour les coordonnées quand le géocodage réussit
+  useEffect(() => {
+    if (geocodingResult) {
+      setGeocodedLocation(geocodingResult.coordinates);
+      console.log('✅ Coordonnées géocodées:', geocodingResult.coordinates);
+    }
+  }, [geocodingResult]);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -166,7 +198,7 @@ export const ReportFromAlert: React.FC = () => {
         city: result.abductedLocation || '',
         state: '',
         country: 'France',
-        coordinates: { lat: 0, lng: 0 }
+        coordinates: geocodedLocation || { lat: 0, lng: 0 }
       },
       description: detailedDescription,
       circumstances: specificCircumstances,
@@ -187,8 +219,18 @@ export const ReportFromAlert: React.FC = () => {
   };
 
   const handleCreateReport = async () => {
+    // Attendre que le géocodage soit terminé (succès ou échec)
+    if (geocodingStatus === 'loading') {
+      alert('Veuillez attendre que le géocodage soit terminé...');
+      return;
+    }
+    
     const payload = await toReportPayload();
     if (!payload) return;
+    
+    console.log('🗺️ Coordonnées à envoyer:', payload.locationDisappeared.coordinates);
+    console.log('📍 Adresse complète:', payload.locationDisappeared);
+    
     setIsSubmitting(true);
     const res = await addReport(payload as any);
     setIsSubmitting(false);
@@ -197,6 +239,7 @@ export const ReportFromAlert: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      
       <div className="mb-8">
         <div className="flex items-center mb-2">
           <AlertTriangle className="h-8 w-8 text-primary-600 mr-2" />
@@ -237,6 +280,49 @@ export const ReportFromAlert: React.FC = () => {
               <Alert variant="success" title="Analyse terminée">
                 Les informations suivantes ont été extraites. Vérifiez et complétez si nécessaire.
               </Alert>
+              
+              {geocodingStatus === 'loading' && (
+                <Alert variant="info" title="Géocodage en cours">
+                  <div className="space-y-2">
+                    <p>Recherche des coordonnées GPS pour le lieu d'enlèvement...</p>
+                    <p className="text-sm text-gray-600">
+                      Lieu: {result.abductedLocationDetails || result.abductedLocation}
+                    </p>
+                    <div className="flex items-center space-x-2">
+                      <LoadingSpinner size="sm" />
+                      <span className="text-sm text-blue-600">Veuillez patienter...</span>
+                    </div>
+                  </div>
+                </Alert>
+              )}
+              
+              {geocodingStatus === 'success' && geocodedLocation && (
+                <Alert variant="success" title="Géocodage réussi">
+                  <div className="space-y-2">
+                    <p>Le lieu a été géocodé avec succès !</p>
+                    <p className="text-sm text-gray-600">
+                      📍 {result.abductedLocationDetails || result.abductedLocation}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      🗺️ Coordonnées: {geocodedLocation.lat.toFixed(6)}, {geocodedLocation.lng.toFixed(6)}
+                    </p>
+                  </div>
+                </Alert>
+              )}
+              
+              {geocodingStatus === 'error' && (
+                <Alert variant="warning" title="Géocodage échoué">
+                  <div className="space-y-2">
+                    <p>Impossible de géocoder le lieu d'enlèvement. Le signalement sera créé sans coordonnées GPS précises.</p>
+                    <p className="text-sm text-gray-600">
+                      Lieu tenté: {result.abductedLocationDetails || result.abductedLocation}
+                    </p>
+                    {geocodingError && (
+                      <p className="text-sm text-red-600">Erreur: {geocodingError}</p>
+                    )}
+                  </div>
+                </Alert>
+              )}
               <div className="bg-gray-50 rounded p-4 space-y-3 text-sm text-gray-800">
                 {/* Informations sur la victime */}
                 <div className="border-b pb-3">
@@ -291,6 +377,61 @@ export const ReportFromAlert: React.FC = () => {
                     <div><strong>Lieu:</strong> {result.abductedLocation || '—'}</div>
                     <div><strong>Adresse précise:</strong> {result.abductedLocationDetails || '—'}</div>
                     <div><strong>Circonstances:</strong> {result.circumstances || '—'}</div>
+                    
+                    {/* Statut de géocodage */}
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700">Géocodage:</span>
+                          {geocodingStatus === 'loading' && (
+                            <div className="flex items-center space-x-1">
+                              <LoadingSpinner size="xs" />
+                              <span className="text-xs text-blue-600">En cours...</span>
+                            </div>
+                          )}
+                          {geocodingStatus === 'success' && geocodedLocation && (
+                            <div className="flex items-center space-x-1">
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                              <span className="text-xs text-green-600">
+                                Coordonnées: {geocodedLocation.lat.toFixed(4)}, {geocodedLocation.lng.toFixed(4)}
+                              </span>
+                            </div>
+                          )}
+                          {geocodingStatus === 'error' && (
+                            <div className="flex items-center space-x-1">
+                              <AlertTriangle className="h-3 w-3 text-red-600" />
+                              <span className="text-xs text-red-600">Échec du géocodage</span>
+                            </div>
+                          )}
+                          {geocodingStatus === 'idle' && (
+                            <span className="text-xs text-gray-500">En attente...</span>
+                          )}
+                        </div>
+                        
+                        {/* Bouton pour déclencher manuellement le géocodage */}
+                        {(geocodingStatus === 'idle' || geocodingStatus === 'error') && result?.abductedLocation && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const locationToGeocode = result.abductedLocationDetails || result.abductedLocation;
+                              const city = result.abductedLocation || '';
+                              console.log('🔄 Géocodage manuel déclenché:', locationToGeocode);
+                              geocodeAddress(locationToGeocode, city, '');
+                            }}
+                            leftIcon={<MapPin className="h-3 w-3" />}
+                          >
+                            Géocoder
+                          </Button>
+                        )}
+                      </div>
+                      {geocodingError && (
+                        <div className="mt-1 text-xs text-red-600">
+                          Erreur: {geocodingError}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -361,7 +502,15 @@ export const ReportFromAlert: React.FC = () => {
                   a.click();
                   URL.revokeObjectURL(url);
                 }}>Exporter JSON</Button>
-                <Button onClick={handleCreateReport} disabled={isSubmitting} leftIcon={<CheckCircle className="h-4 w-4" />}>{isSubmitting ? 'Création…' : 'Créer le signalement'}</Button>
+                <Button 
+                  onClick={handleCreateReport} 
+                  disabled={isSubmitting || geocodingStatus === 'loading'} 
+                  leftIcon={<CheckCircle className="h-4 w-4" />}
+                >
+                  {isSubmitting ? 'Création…' : 
+                   geocodingStatus === 'loading' ? 'Géocodage en cours…' : 
+                   'Créer le signalement'}
+                </Button>
               </div>
             </div>
           )}

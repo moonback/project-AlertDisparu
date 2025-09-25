@@ -5,7 +5,7 @@ import { ReportCard } from '../components/Reports/ReportCard';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { Plus, Search, AlertTriangle, Users, FileText } from 'lucide-react';
+import { Plus, Search, AlertTriangle, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const ReportsPage: React.FC = () => {

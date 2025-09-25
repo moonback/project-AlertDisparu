@@ -96,6 +96,7 @@ function App() {
           </ProtectedRoute>
         } />
         
+        
         <Route path="/carte" element={
           <ProtectedRoute>
             <Layout>

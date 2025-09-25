@@ -117,6 +117,7 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         gender: reportData.gender,
         photo: reportData.photo || null,
         date_disappeared: reportData.dateDisappeared,
+        time_disappeared: reportData.timeDisappeared || null,
         location_address: reportData.locationDisappeared.address,
         location_city: reportData.locationDisappeared.city,
         location_state: reportData.locationDisappeared.state,
@@ -124,6 +125,14 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         location_lat: reportData.locationDisappeared.coordinates.lat,
         location_lng: reportData.locationDisappeared.coordinates.lng,
         description: reportData.description,
+        case_type: reportData.caseType || 'disappearance',
+        priority: reportData.priority || 'medium',
+        circumstances: reportData.circumstances || null,
+        clothing_description: reportData.clothingDescription || null,
+        personal_items: reportData.personalItems || null,
+        medical_info: reportData.medicalInfo || null,
+        behavioral_info: reportData.behavioralInfo || null,
+        is_emergency: reportData.isEmergency || false,
         reporter_name: reportData.reporterContact.name,
         reporter_relationship: reportData.reporterContact.relationship,
         reporter_phone: reportData.reporterContact.phone,
@@ -134,6 +143,12 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
       };
 
       console.log('📦 Payload pour Supabase:', payload);
+      console.log('🗺️ Coordonnées dans le payload:', {
+        lat: payload.location_lat,
+        lng: payload.location_lng,
+        address: payload.location_address,
+        city: payload.location_city
+      });
 
       // S'assurer que le token est correctement configuré
       const { data: { session } } = await supabase.auth.getSession();
