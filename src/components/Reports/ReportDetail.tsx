@@ -7,11 +7,13 @@ import { Badge } from '../ui/Badge';
 import { Alert } from '../ui/Alert';
 import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, AlertTriangle, Clock, Eye, Info, AlertCircle } from 'lucide-react';
 import { CaseTypeBadge } from '../ui/CaseTypeBadge';
+import { InvestigationObservations } from '../Investigation/InvestigationObservations';
 
 export const ReportDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getReportById } = useMissingPersonsStore();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<'details' | 'investigation'>('details');
   
   const report = id ? getReportById(id) : null;
 
@@ -122,7 +124,37 @@ export const ReportDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Onglets */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'details'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Détails du rapport
+            </button>
+            <button
+              onClick={() => setActiveTab('investigation')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'investigation'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Investigation
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Contenu des onglets */}
+      {activeTab === 'details' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Photo and Basic Info */}
@@ -362,6 +394,9 @@ export const ReportDetail: React.FC = () => {
           </Card>
         </div>
       </div>
+      ) : (
+        <InvestigationObservations />
+      )}
     </div>
   );
 };

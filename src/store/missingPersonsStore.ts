@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MissingPerson, SearchFilters } from '../types';
+import { MissingPerson, SearchFilters, InvestigationObservation } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from './authStore';
 
@@ -16,6 +16,11 @@ interface MissingPersonsState {
   updateFilters: (filters: SearchFilters) => void;
   getReportById: (id: string) => MissingPerson | undefined;
   calculateDistance: (lat1: number, lon1: number, lat2: number, lon2: number) => number;
+  // Méthodes pour les observations d'investigation
+  getObservationsByReportId: (reportId: string) => Promise<InvestigationObservation[]>;
+  addObservation: (observation: Omit<InvestigationObservation, 'id' | 'createdAt' | 'updatedAt' | 'isVerified' | 'verifiedBy' | 'verifiedAt' | 'createdBy' | 'distanceFromDisappearance'>) => Promise<{ success: boolean; error?: string; id?: string }>;
+  updateObservation: (id: string, updates: Partial<InvestigationObservation>) => Promise<{ success: boolean; error?: string }>;
+  deleteObservation: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 // Pas de données mock en prod: on charge depuis Supabase
@@ -397,5 +402,205 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+  },
+
+  getObservationsByReportId: async (reportId) => {
+    console.log('🔍 Chargement des observations pour le rapport:', reportId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('investigation_observations')
+        .select(`
+          *,
+          missing_persons!inner(location_lat, location_lng)
+        `)
+        .eq('missing_person_id', reportId)
+        .order('observation_date', { ascending: false });
+
+      if (error) {
+        console.error('❌ Erreur chargement observations:', error);
+        throw error;
+      }
+
+      const mapped: InvestigationObservation[] = (data || []).map(row => {
+        const report = row.missing_persons;
+        const distanceFromDisappearance = report?.location_lat && report?.location_lng && row.location_lat && row.location_lng
+          ? get().calculateDistance(
+              report.location_lat, 
+              report.location_lng, 
+              row.location_lat, 
+              row.location_lng
+            )
+          : undefined;
+
+        return {
+          id: row.id,
+          missingPersonId: row.missing_person_id,
+          observerName: row.observer_name,
+          observerPhone: row.observer_phone || undefined,
+          observerEmail: row.observer_email || undefined,
+          observationDate: row.observation_date,
+          observationTime: row.observation_time || undefined,
+          location: {
+            address: row.location_address,
+            city: row.location_city,
+            state: row.location_state,
+            country: row.location_country,
+            coordinates: { lat: row.location_lat, lng: row.location_lng }
+          },
+          description: row.description,
+          confidenceLevel: row.confidence_level,
+          clothingDescription: row.clothing_description || undefined,
+          behaviorDescription: row.behavior_description || undefined,
+          companions: row.companions || undefined,
+          vehicleInfo: row.vehicle_info || undefined,
+          witnessContactConsent: row.witness_contact_consent,
+          isVerified: row.is_verified,
+          verifiedBy: row.verified_by || undefined,
+          verifiedAt: row.verified_at || undefined,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          createdBy: row.created_by || undefined,
+          distanceFromDisappearance
+        };
+      });
+
+      return mapped;
+    } catch (err) {
+      console.error('💥 Exception dans getObservationsByReportId:', err);
+      throw err;
+    }
+  },
+
+  addObservation: async (observationData) => {
+    console.log('➕ Ajout d\'une observation:', observationData);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const payload = {
+        missing_person_id: observationData.missingPersonId,
+        observer_name: observationData.observerName,
+        observer_phone: observationData.observerPhone || null,
+        observer_email: observationData.observerEmail || null,
+        observation_date: observationData.observationDate,
+        observation_time: observationData.observationTime || null,
+        location_address: observationData.location.address,
+        location_city: observationData.location.city,
+        location_state: observationData.location.state,
+        location_country: observationData.location.country,
+        location_lat: observationData.location.coordinates.lat,
+        location_lng: observationData.location.coordinates.lng,
+        description: observationData.description,
+        confidence_level: observationData.confidenceLevel,
+        clothing_description: observationData.clothingDescription || null,
+        behavior_description: observationData.behaviorDescription || null,
+        companions: observationData.companions || null,
+        vehicle_info: observationData.vehicleInfo || null,
+        witness_contact_consent: observationData.witnessContactConsent,
+        created_by: authState.user.id
+      };
+
+      const { data, error } = await supabase
+        .from('investigation_observations')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('❌ Erreur insertion observation:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, id: data?.id };
+    } catch (err) {
+      console.error('💥 Exception dans addObservation:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
+  },
+
+  updateObservation: async (id, updates) => {
+    console.log('🔄 Mise à jour de l\'observation:', id, updates);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      // Mapper les champs selon la structure de la base de données
+      if (updates.observerName) updateData.observer_name = updates.observerName;
+      if (updates.observerPhone !== undefined) updateData.observer_phone = updates.observerPhone;
+      if (updates.observerEmail !== undefined) updateData.observer_email = updates.observerEmail;
+      if (updates.observationDate) updateData.observation_date = updates.observationDate;
+      if (updates.observationTime !== undefined) updateData.observation_time = updates.observationTime;
+      if (updates.description) updateData.description = updates.description;
+      if (updates.confidenceLevel) updateData.confidence_level = updates.confidenceLevel;
+      if (updates.clothingDescription !== undefined) updateData.clothing_description = updates.clothingDescription;
+      if (updates.behaviorDescription !== undefined) updateData.behavior_description = updates.behaviorDescription;
+      if (updates.companions !== undefined) updateData.companions = updates.companions;
+      if (updates.vehicleInfo !== undefined) updateData.vehicle_info = updates.vehicleInfo;
+      if (updates.witnessContactConsent !== undefined) updateData.witness_contact_consent = updates.witnessContactConsent;
+
+      // Mettre à jour la localisation si nécessaire
+      if (updates.location) {
+        updateData.location_address = updates.location.address;
+        updateData.location_city = updates.location.city;
+        updateData.location_state = updates.location.state;
+        updateData.location_country = updates.location.country;
+        updateData.location_lat = updates.location.coordinates.lat;
+        updateData.location_lng = updates.location.coordinates.lng;
+      }
+
+      const { error } = await supabase
+        .from('investigation_observations')
+        .update(updateData)
+        .eq('id', id)
+        .eq('created_by', authState.user.id); // S'assurer que l'utilisateur peut seulement modifier ses propres observations
+
+      if (error) {
+        console.error('❌ Erreur mise à jour observation:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('💥 Exception dans updateObservation:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
+  },
+
+  deleteObservation: async (id) => {
+    console.log('🗑️ Suppression de l\'observation:', id);
+    
+    try {
+      const authState = useAuthStore.getState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { success: false, error: 'Utilisateur non authentifié' };
+      }
+
+      const { error } = await supabase
+        .from('investigation_observations')
+        .delete()
+        .eq('id', id)
+        .eq('created_by', authState.user.id); // S'assurer que l'utilisateur peut seulement supprimer ses propres observations
+
+      if (error) {
+        console.error('❌ Erreur suppression observation:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('💥 Exception dans deleteObservation:', err);
+      return { success: false, error: `Erreur: ${err}` };
+    }
   }
 }));
