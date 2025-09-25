@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useMissingPersonsStore } from '../store/missingPersonsStore';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/Card';
-import { Search, MapPin, AlertTriangle, Users, Clock, Shield, Heart, Phone, Eye, CheckCircle, Star } from 'lucide-react';
+import { Card, CardContent } from '../components/ui/Card';
+import { Search, MapPin, AlertTriangle, Users, Clock, Shield, Heart, Eye } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
@@ -238,32 +238,7 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Emergency Information */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700">
-        <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center mb-6">
-            <div className="p-3 bg-white/20 rounded-full">
-              <Phone className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Situation d'urgence ?</h2>
-          <p className="text-red-100 mb-8 max-w-3xl mx-auto text-lg">
-            Si quelqu'un vient de disparaître ou si vous êtes en danger immédiat, contactez d'abord les services d'urgence.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="tel:15">
-              <Button variant="secondary" size="xl" className="w-full sm:w-auto bg-white text-red-600 hover:bg-gray-100" leftIcon={<Phone className="h-6 w-6" />}>
-                Appeler le 15
-              </Button>
-            </a>
-            <a href="tel:17">
-              <Button variant="outline" size="xl" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-red-600" leftIcon={<Phone className="h-6 w-6" />}>
-                Non-urgence : 17
-              </Button>
-            </a>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 };

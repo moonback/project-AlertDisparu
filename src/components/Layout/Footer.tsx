@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Shield, Heart, Mail, Phone } from 'lucide-react';
+import { Search, Shield, Mail, Phone } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -67,20 +67,7 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             
-            <div className="mt-6 p-4 bg-red-900/30 rounded-lg border border-red-800">
-              <h4 className="font-semibold text-red-200 mb-2">Urgence ?</h4>
-              <p className="text-sm text-red-300 mb-2">
-                En cas d'urgence immédiate, contactez les services d'urgence.
-              </p>
-              <div className="flex space-x-2">
-                <a href="tel:15" className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors">
-                  15
-                </a>
-                <a href="tel:17" className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors">
-                  17
-                </a>
-              </div>
-            </div>
+            
           </div>
         </div>
 

@@ -5,15 +5,18 @@ import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Alert } from '../ui/Alert';
-import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, AlertTriangle, Clock, Eye, Info, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, Clock, Eye, Info, AlertCircle, Search, CheckCircle, TrendingUp, Camera, Plus } from 'lucide-react';
 import { CaseTypeBadge } from '../ui/CaseTypeBadge';
 import { InvestigationObservations } from '../Investigation/InvestigationObservations';
+import { InvestigationObservation } from '../../types';
 
 export const ReportDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getReportById } = useMissingPersonsStore();
+  const { getReportById, getObservationsByReportId } = useMissingPersonsStore();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'investigation'>('details');
+  const [observations, setObservations] = useState<InvestigationObservation[]>([]);
+  const [observationsLoading, setObservationsLoading] = useState(false);
   
   const report = id ? getReportById(id) : null;
 
@@ -33,6 +36,17 @@ export const ReportDetail: React.FC = () => {
       );
     }
   }, []);
+
+  // Charger les observations quand le rapport change
+  useEffect(() => {
+    if (report?.id) {
+      setObservationsLoading(true);
+      getObservationsByReportId(report.id)
+        .then(setObservations)
+        .catch(console.error)
+        .finally(() => setObservationsLoading(false));
+    }
+  }, [report?.id, getObservationsByReportId]);
 
   if (!report) {
     return (
@@ -84,6 +98,28 @@ export const ReportDetail: React.FC = () => {
   const daysSinceMissing = Math.floor(
     (new Date().getTime() - new Date(report.dateDisappeared).getTime()) / (1000 * 60 * 60 * 24)
   );
+
+  // Calculer les statistiques des observations
+  const getObservationStats = () => {
+    if (!observations.length) return null;
+    
+    const verifiedCount = observations.filter(obs => obs.isVerified).length;
+    const highConfidenceCount = observations.filter(obs => obs.confidenceLevel === 'high').length;
+    const citiesCount = new Set(observations.map(obs => obs.location.city)).size;
+    const photosCount = observations.reduce((total, obs) => total + (obs.photos?.length || 0), 0);
+    const latestObservation = observations[0]; // Déjà triées par date décroissante
+    
+    return {
+      total: observations.length,
+      verified: verifiedCount,
+      highConfidence: highConfidenceCount,
+      cities: citiesCount,
+      photos: photosCount,
+      latest: latestObservation
+    };
+  };
+
+  const stats = getObservationStats();
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -289,6 +325,139 @@ export const ReportDetail: React.FC = () => {
                     <p className="text-yellow-800">{report.behavioralInfo}</p>
                   </div>
                 )}
+
+                {/* Section Investigation */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-3 flex items-center">
+                    <Search className="h-5 w-5 mr-2" />
+                    Investigation - Résumé des observations et témoignages
+                  </h4>
+                  
+                  {observationsLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-sm text-blue-600 mt-2">Chargement des observations...</p>
+                    </div>
+                  ) : stats ? (
+                    <div className="space-y-4">
+                      {/* Statistiques principales */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-white rounded-lg p-3 border border-blue-100">
+                          <div className="flex items-center">
+                            <Eye className="h-4 w-4 text-blue-600 mr-2" />
+                            <div>
+                              <dt className="text-xs font-medium text-blue-600">Total</dt>
+                              <dd className="text-lg font-bold text-blue-900">{stats.total}</dd>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-green-100">
+                          <div className="flex items-center">
+                            <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                            <div>
+                              <dt className="text-xs font-medium text-green-600">Vérifiées</dt>
+                              <dd className="text-lg font-bold text-green-900">{stats.verified}</dd>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-purple-100">
+                          <div className="flex items-center">
+                            <TrendingUp className="h-4 w-4 text-purple-600 mr-2" />
+                            <div>
+                              <dt className="text-xs font-medium text-purple-600">Haute confiance</dt>
+                              <dd className="text-lg font-bold text-purple-900">{stats.highConfidence}</dd>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-orange-100">
+                          <div className="flex items-center">
+                            <MapPin className="h-4 w-4 text-orange-600 mr-2" />
+                            <div>
+                              <dt className="text-xs font-medium text-orange-600">Villes</dt>
+                              <dd className="text-lg font-bold text-orange-900">{stats.cities}</dd>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Photos */}
+                      {stats.photos > 0 && (
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-center">
+                            <Camera className="h-4 w-4 text-gray-600 mr-2" />
+                            <span className="text-sm font-medium text-gray-700">
+                              {stats.photos} photo{stats.photos > 1 ? 's' : ''} disponible{stats.photos > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dernière observation */}
+                      {stats.latest && (
+                        <div className="bg-white rounded-lg p-4 border border-gray-100">
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Dernière observation</h5>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{new Date(stats.latest.observationDate).toLocaleDateString('fr-FR')}</span>
+                              {stats.latest.observationTime && (
+                                <>
+                                  <Clock className="h-4 w-4 ml-3 mr-1 text-gray-400" />
+                                  <span>{stats.latest.observationTime}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                              <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{stats.latest.location.city}, {stats.latest.location.state}</span>
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                              <User className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>Par {stats.latest.observerName}</span>
+                            </div>
+                            <div className="mt-2">
+                              <Badge variant={stats.latest.confidenceLevel === 'high' ? 'success' : stats.latest.confidenceLevel === 'medium' ? 'warning' : 'default'} size="sm">
+                                Confiance {stats.latest.confidenceLevel === 'high' ? 'élevée' : stats.latest.confidenceLevel === 'medium' ? 'moyenne' : 'faible'}
+                              </Badge>
+                              {stats.latest.isVerified && (
+                                <Badge variant="success" size="sm" className="ml-2">
+                                  Vérifiée
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lien vers l'onglet investigation */}
+                      <div className="text-center pt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setActiveTab('investigation')}
+                          leftIcon={<Search className="h-4 w-4" />}
+                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                        >
+                          Voir toutes les observations
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Search className="h-12 w-12 text-blue-300 mx-auto mb-3" />
+                      <p className="text-blue-600 text-sm">Aucune observation pour le moment</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setActiveTab('investigation')}
+                        className="mt-3 border-blue-300 text-blue-700 hover:bg-blue-50"
+                        leftIcon={<Plus className="h-4 w-4" />}
+                      >
+                        Ajouter la première observation
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -363,35 +532,8 @@ export const ReportDetail: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Emergency Contacts */}
-          <Card variant="elevated">
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
-                Services d'urgence
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 text-sm">
-                <div className="bg-red-50 rounded-lg p-3 border border-red-200">
-                  <dt className="text-gray-500 mb-1">Urgence</dt>
-                  <dd>
-                    <a href="tel:112" className="text-red-600 hover:text-red-700 font-bold text-lg">
-                      112
-                    </a>
-                  </dd>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                  <dt className="text-gray-500 mb-1">Police</dt>
-                  <dd>
-                    <a href="tel:17" className="text-blue-600 hover:text-blue-700 font-bold text-lg">
-                      17
-                    </a>
-                  </dd>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          
+
         </div>
       </div>
       ) : (
