@@ -10,6 +10,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   showPasswordToggle?: boolean;
+  variant?: 'default' | 'glass';
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -21,6 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     leftIcon, 
     rightIcon, 
     showPasswordToggle = false,
+    variant = 'default',
     className, 
     type = 'text', 
     ...props 
@@ -55,12 +57,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={inputType}
             className={cn(
-              'input-field',
+              variant === 'glass' ? 'glass-input' : 'input-field',
               hasLeftIcon && 'pl-10',
               hasRightIcon && 'pr-10',
-              error && 'error',
-              success && 'border-green-300 focus:ring-green-500',
-              isFocused && !error && !success && 'ring-2 ring-primary-500',
+              error && variant === 'default' && 'error',
+              error && variant === 'glass' && 'border-red-300 focus:ring-red-400',
+              success && variant === 'default' && 'border-green-300 focus:ring-green-500',
+              success && variant === 'glass' && 'border-green-400 focus:ring-green-400',
+              isFocused && !error && !success && variant === 'default' && 'ring-2 ring-primary-500',
               className
             )}
             onFocus={() => setIsFocused(true)}

@@ -58,7 +58,7 @@ export const UserMenu: React.FC = () => {
       {/* Bouton du menu utilisateur */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-3 text-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-xl p-2 group"
+        className="flex items-center space-x-3 text-sm transition-all duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-xl p-2 group glass-nav-item"
       >
         <UserAvatar size="md" showIndicator={true} />
         <div className="hidden sm:block text-left">
@@ -74,10 +74,10 @@ export const UserMenu: React.FC = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-strong border border-gray-200 focus:outline-none z-50 animate-slide-down">
+        <div className="absolute right-0 mt-3 w-72 glass-card-strong focus:outline-none z-50 animate-slide-down">
           <div className="py-2">
             {/* En-tête avec info utilisateur */}
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="px-4 py-4 border-b border-white/20">
               <div className="flex items-center space-x-3">
                 <UserAvatar size="lg" showIndicator={true} />
                 <div className="flex-1">
@@ -97,7 +97,7 @@ export const UserMenu: React.FC = () => {
             <div className="py-2">
               <Link
                 to="/profil"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors group"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-white/20 transition-colors group"
               >
                 <User className="h-4 w-4 mr-3 text-gray-400 group-hover:text-primary-600 transition-colors" />
                 <span className="group-hover:text-primary-600 transition-colors">Mon Profil</span>
@@ -105,7 +105,7 @@ export const UserMenu: React.FC = () => {
 
               <Link
                 to="/profil"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors group"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-white/20 transition-colors group"
               >
                 <Settings className="h-4 w-4 mr-3 text-gray-400 group-hover:text-primary-600 transition-colors" />
                 <span className="group-hover:text-primary-600 transition-colors">Paramètres</span>
@@ -113,7 +113,7 @@ export const UserMenu: React.FC = () => {
 
               <Link
                 to="/mes-alertes"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors group"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-white/20 transition-colors group"
               >
                 <Bell className="h-4 w-4 mr-3 text-gray-400 group-hover:text-primary-600 transition-colors" />
                 <span className="group-hover:text-primary-600 transition-colors">Mes Alertes</span>
@@ -121,7 +121,7 @@ export const UserMenu: React.FC = () => {
             </div>
 
             {/* Séparateur */}
-            <div className="border-t border-gray-100 my-2"></div>
+            <div className="border-t border-white/20 my-2"></div>
 
             {/* Bouton de déconnexion */}
             <button

@@ -79,15 +79,15 @@ export const HomePage: React.FC = () => {
   const resolutionRate = reports.length > 0 ? Math.round((foundReports.length / reports.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative">
       {/* Header du tableau de bord */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="glass-hero mx-4 mt-6 mb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
+          <div className="py-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Tableau de bord d'investigation</h1>
-                <p className="text-gray-600 mt-1">Centre de contrôle pour la recherche de personnes disparues</p>
+                <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">Tableau de bord d'investigation</h1>
+                <p className="text-gray-700 mt-1 text-lg">Centre de contrôle pour la recherche de personnes disparues</p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -95,7 +95,7 @@ export const HomePage: React.FC = () => {
                   <select 
                     value={selectedTimeframe} 
                     onChange={(e) => setSelectedTimeframe(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                    className="glass-input px-3 py-1 text-sm"
                   >
                     <option value="7d">7 derniers jours</option>
                     <option value="30d">30 derniers jours</option>
@@ -104,7 +104,7 @@ export const HomePage: React.FC = () => {
                   </select>
                 </div>
                 <Link to="/signalement">
-                  <Button leftIcon={<Plus className="h-4 w-4" />}>
+                  <Button variant="glass" leftIcon={<Plus className="h-4 w-4" />}>
                     Nouveau signalement
                   </Button>
                 </Link>
@@ -117,36 +117,44 @@ export const HomePage: React.FC = () => {
       {/* Statistiques principales */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Cas actifs"
-            value={activeReports.length}
-            icon={<AlertTriangle className="h-5 w-5" />}
-            description="En cours d'investigation"
-          />
-          <StatCard
-            title="Cas résolus"
-            value={foundReports.length}
-            icon={<CheckCircle className="h-5 w-5" />}
-            description={`${resolutionRate}% de taux de résolution`}
-          />
-          <StatCard
-            title="Urgences"
-            value={emergencyReports.length}
-            icon={<Zap className="h-5 w-5" />}
-            description="Cas prioritaires"
-          />
-          <StatCard
-            title="Haute priorité"
-            value={highPriorityReports.length}
-            icon={<Target className="h-5 w-5" />}
-            description="Cas critiques"
-          />
+          <div className="glass-floating">
+            <StatCard
+              title="Cas actifs"
+              value={activeReports.length}
+              icon={<AlertTriangle className="h-5 w-5" />}
+              description="En cours d'investigation"
+            />
+          </div>
+          <div className="glass-floating" style={{animationDelay: '1s'}}>
+            <StatCard
+              title="Cas résolus"
+              value={foundReports.length}
+              icon={<CheckCircle className="h-5 w-5" />}
+              description={`${resolutionRate}% de taux de résolution`}
+            />
+          </div>
+          <div className="glass-floating" style={{animationDelay: '2s'}}>
+            <StatCard
+              title="Urgences"
+              value={emergencyReports.length}
+              icon={<Zap className="h-5 w-5" />}
+              description="Cas prioritaires"
+            />
+          </div>
+          <div className="glass-floating" style={{animationDelay: '3s'}}>
+            <StatCard
+              title="Haute priorité"
+              value={highPriorityReports.length}
+              icon={<Target className="h-5 w-5" />}
+              description="Cas critiques"
+            />
+          </div>
         </div>
 
         {/* Graphiques et analyses */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Répartition par type de cas */}
-          <Card>
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Répartition par type de cas</h3>
             </CardHeader>
@@ -168,7 +176,7 @@ export const HomePage: React.FC = () => {
           </Card>
 
           {/* Activité récente */}
-          <Card>
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Activité récente</h3>
             </CardHeader>
@@ -202,7 +210,7 @@ export const HomePage: React.FC = () => {
           </Card>
 
           {/* Actions rapides */}
-          <Card>
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900">Actions rapides</h3>
             </CardHeader>
@@ -233,7 +241,7 @@ export const HomePage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Cas urgents */}
-          <Card>
+          <Card variant="glass-strong">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -297,7 +305,7 @@ export const HomePage: React.FC = () => {
           </Card>
 
           {/* Rapports récents */}
-          <Card>
+          <Card variant="glass-strong">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -369,23 +377,23 @@ export const HomePage: React.FC = () => {
 
       {/* Message pour les utilisateurs non connectés */}
       {!isAuthenticated && (
-        <div className="bg-gradient-to-br from-primary-50 to-white">
+        <div className="glass-hero mx-4 mb-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
             <div className="mb-8">
-              <Shield className="h-16 w-16 text-primary-600 mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Accès sécurisé requis</h2>
-              <p className="text-lg text-gray-600 mb-8">
+              <Shield className="h-16 w-16 text-primary-600 mx-auto mb-4 animate-glow" />
+              <h2 className="text-3xl font-bold text-gray-900 mb-4 glass-shimmer">Accès sécurisé requis</h2>
+              <p className="text-lg text-gray-700 mb-8">
                 Ce tableau de bord d'investigation nécessite une authentification pour garantir la sécurité des données sensibles.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/inscription">
-                <Button size="lg" leftIcon={<Heart className="h-5 w-5" />}>
+                <Button variant="glass" size="lg" leftIcon={<Heart className="h-5 w-5" />}>
                   Créer un compte
                 </Button>
               </Link>
               <Link to="/connexion">
-                <Button variant="outline" size="lg">
+                <Button variant="glass" size="lg">
                   Se connecter
                 </Button>
               </Link>

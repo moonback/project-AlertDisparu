@@ -109,7 +109,7 @@ export const SearchFilters: React.FC = () => {
   }, [localFilters.query, localFilters.gender, localFilters.caseType, localFilters.priority, localFilters.status, localFilters.location, localFilters.isEmergency]);
 
   return (
-    <Card variant="elevated" className="mb-6">
+    <Card variant="glass" className="mb-6">
       <CardHeader>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">

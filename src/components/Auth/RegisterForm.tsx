@@ -64,26 +64,33 @@ export const RegisterForm: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-lg w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-300/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-300/20 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-200/10 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
+      
+      <div className="max-w-lg w-full space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-6">
             <div className="relative">
-              <Search className="h-12 w-12 text-primary-600" />
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-500 rounded-full animate-pulse"></div>
+              <Search className="h-12 w-12 text-primary-600 animate-glow" />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-primary-500 rounded-full animate-pulse shadow-brand-glow"></div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">
             Rejoindre AlertDisparu
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700 text-lg">
             Créez votre compte pour aider la communauté
           </p>
         </div>
         
         {/* Form Card */}
-        <Card variant="elevated" className="animate-fade-in">
+        <Card variant="glass-strong" className="animate-fade-in">
           <CardHeader>
             <CardTitle className="text-center text-xl">Créer un compte</CardTitle>
             <CardDescription className="text-center">
@@ -99,6 +106,7 @@ export const RegisterForm: React.FC = () => {
                     label="Prénom"
                     placeholder="Votre prénom"
                     leftIcon={<User className="h-5 w-5" />}
+                    variant="glass"
                     {...register('firstName')}
                     error={errors.firstName?.message}
                     required
@@ -108,6 +116,7 @@ export const RegisterForm: React.FC = () => {
                     label="Nom"
                     placeholder="Votre nom"
                     leftIcon={<User className="h-5 w-5" />}
+                    variant="glass"
                     {...register('lastName')}
                     error={errors.lastName?.message}
                     required
@@ -119,6 +128,7 @@ export const RegisterForm: React.FC = () => {
                   type="email"
                   placeholder="votre@email.com"
                   leftIcon={<Mail className="h-5 w-5" />}
+                  variant="glass"
                   {...register('email')}
                   error={errors.email?.message}
                   required
@@ -127,6 +137,7 @@ export const RegisterForm: React.FC = () => {
                 <Select
                   label="Votre rôle"
                   options={roleOptions}
+                  variant="glass"
                   {...register('role')}
                   error={errors.role?.message}
                   required
@@ -138,6 +149,7 @@ export const RegisterForm: React.FC = () => {
                   placeholder="Choisissez un mot de passe sécurisé"
                   leftIcon={<Lock className="h-5 w-5" />}
                   showPasswordToggle={true}
+                  variant="glass"
                   {...register('password')}
                   error={errors.password?.message}
                   required
@@ -149,6 +161,7 @@ export const RegisterForm: React.FC = () => {
                   placeholder="Confirmez votre mot de passe"
                   leftIcon={<Lock className="h-5 w-5" />}
                   showPasswordToggle={true}
+                  variant="glass"
                   {...register('confirmPassword')}
                   error={errors.confirmPassword?.message}
                   required
@@ -166,6 +179,7 @@ export const RegisterForm: React.FC = () => {
                 type="submit"
                 className="w-full"
                 size="lg"
+                variant="glass"
                 isLoading={loading}
                 leftIcon={<Users className="h-5 w-5" />}
               >
@@ -187,20 +201,20 @@ export const RegisterForm: React.FC = () => {
         
         {/* Benefits */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-white rounded-xl shadow-soft">
-            <Shield className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+          <div className="text-center p-4 glass-card">
+            <Shield className="h-8 w-8 text-primary-600 mx-auto mb-2 animate-glow" />
             <h3 className="font-semibold text-gray-900 mb-1">Sécurisé</h3>
             <p className="text-sm text-gray-600">Conforme RGPD</p>
           </div>
           
-          <div className="text-center p-4 bg-white rounded-xl shadow-soft">
-            <Users className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+          <div className="text-center p-4 glass-card">
+            <Users className="h-8 w-8 text-primary-600 mx-auto mb-2 animate-glow" />
             <h3 className="font-semibold text-gray-900 mb-1">Communauté</h3>
             <p className="text-sm text-gray-600">Entraide locale</p>
           </div>
           
-          <div className="text-center p-4 bg-white rounded-xl shadow-soft">
-            <CheckCircle className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+          <div className="text-center p-4 glass-card">
+            <CheckCircle className="h-8 w-8 text-primary-600 mx-auto mb-2 animate-glow" />
             <h3 className="font-semibold text-gray-900 mb-1">Efficace</h3>
             <p className="text-sm text-gray-600">Alertes rapides</p>
           </div>

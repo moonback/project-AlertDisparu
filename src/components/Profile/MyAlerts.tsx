@@ -147,31 +147,31 @@ export const MyAlerts: React.FC<MyAlertsProps> = ({ className = '' }) => {
 
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
             <div className="text-sm text-gray-600">Total</div>
           </CardContent>
         </Card>
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-red-600">{stats.active}</div>
             <div className="text-sm text-gray-600">Actifs</div>
           </CardContent>
         </Card>
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{stats.found}</div>
             <div className="text-sm text-gray-600">Retrouvés</div>
           </CardContent>
         </Card>
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-gray-600">{stats.closed}</div>
             <div className="text-sm text-gray-600">Fermés</div>
           </CardContent>
         </Card>
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">{stats.emergency}</div>
             <div className="text-sm text-gray-600">Urgences</div>
@@ -180,7 +180,7 @@ export const MyAlerts: React.FC<MyAlertsProps> = ({ className = '' }) => {
       </div>
 
       {/* Filtres */}
-      <Card variant="elevated">
+      <Card variant="glass">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -232,7 +232,7 @@ export const MyAlerts: React.FC<MyAlertsProps> = ({ className = '' }) => {
 
       {/* Liste des signalements */}
       {filteredReports.length === 0 ? (
-        <Card variant="elevated">
+        <Card variant="glass">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -256,7 +256,7 @@ export const MyAlerts: React.FC<MyAlertsProps> = ({ className = '' }) => {
       ) : (
         <div className="space-y-4">
           {filteredReports.map((report) => (
-            <Card key={report.id} variant="elevated" className="hover:shadow-strong transition-shadow">
+            <Card key={report.id} variant="glass" className="hover:shadow-brand-glow transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Photo */}
@@ -319,12 +319,12 @@ export const MyAlerts: React.FC<MyAlertsProps> = ({ className = '' }) => {
                       {/* Actions */}
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Link to={`/rapports/${report.id}`}>
-                          <Button variant="outline" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
+                          <Button variant="glass" size="sm" leftIcon={<Eye className="h-4 w-4" />}>
                             Voir
                           </Button>
                         </Link>
                         <Link to={`/rapports/${report.id}/modifier`}>
-                          <Button variant="outline" size="sm" leftIcon={<Edit className="h-4 w-4" />}>
+                          <Button variant="glass" size="sm" leftIcon={<Edit className="h-4 w-4" />}>
                             Modifier
                           </Button>
                         </Link>

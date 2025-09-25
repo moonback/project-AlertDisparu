@@ -224,20 +224,22 @@ export const ReportForm: React.FC = () => {
   
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mb-8 text-center">
+      {/* Header avec effet glass */}
+      <div className="glass-hero p-6 mb-8 text-center">
         <div className="flex items-center justify-center mb-4">
-          <User className="h-10 w-10 text-primary-600 mr-2" />
-          <h1 className="text-3xl font-bold text-gray-900">Signaler une personne disparue</h1>
+          <User className="h-12 w-12 text-primary-600 mr-3 animate-glow" />
+          <div className="w-3 h-3 bg-primary-500 rounded-full animate-pulse shadow-brand-glow"></div>
         </div>
-        <p className="mt-2 text-gray-600">Merci de fournir un maximum d'informations pour aider les recherches.</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">Signaler une personne disparue</h1>
+        <p className="mt-2 text-gray-700">Merci de fournir un maximum d'informations pour aider les recherches.</p>
       </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Analyse d'image en premier */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Brain className="h-5 w-5 mr-2" />
+              <Brain className="h-5 w-5 mr-2 text-primary-600 animate-glow" />
               Analyse intelligente d'image
             </h2>
             <p className="text-sm text-gray-600">
@@ -264,13 +266,17 @@ export const ReportForm: React.FC = () => {
           </CardContent>
         </Card>
         {/* Informations sur la personne disparue */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Informations sur la personne disparue</h2>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <User className="h-5 w-5 mr-2 text-primary-600" />
+              Informations sur la personne disparue
+            </h2>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
+                variant="glass"
                 label="Prénom"
                 leftIcon={<User className="h-5 w-5" />}
                 {...register('firstName')}
@@ -279,6 +285,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Input
+                variant="glass"
                 label="Nom"
                 leftIcon={<User className="h-5 w-5" />}
                 {...register('lastName')}
@@ -287,6 +294,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Input
+                variant="glass"
                 label="Âge"
                 type="number"
                 {...register('age', { valueAsNumber: true })}
@@ -295,6 +303,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Select
+                variant="glass"
                 label="Genre"
                 options={genderOptions}
                 {...register('gender')}
@@ -303,6 +312,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Select
+                variant="glass"
                 label="Type de cas"
                 options={caseTypeOptions}
                 {...register('caseType')}
@@ -333,8 +343,8 @@ export const ReportForm: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-gray-400 transition-colors bg-white">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="glass-card border-2 border-dashed border-white/30 rounded-xl p-6 text-center hover:border-primary-400/50 transition-colors">
+                  <Upload className="mx-auto h-12 w-12 text-primary-400" />
                   <div className="mt-2">
                     <label htmlFor="photo-upload" className="cursor-pointer">
                       <span className="text-primary-600 hover:text-primary-700 font-medium">
@@ -357,10 +367,10 @@ export const ReportForm: React.FC = () => {
         </Card>
         
         {/* Localisation et date */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <MapPin className="h-5 w-5 mr-2" />
+              <MapPin className="h-5 w-5 mr-2 text-primary-600" />
               Dernière localisation connue & date
             </h2>
           </CardHeader>
@@ -368,6 +378,7 @@ export const ReportForm: React.FC = () => {
             <div className="grid grid-cols-1 gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
+                  variant="glass"
                   label="Date de disparition"
                   type="date"
                   leftIcon={<Calendar className="h-5 w-5" />}
@@ -377,6 +388,7 @@ export const ReportForm: React.FC = () => {
                 />
                 
                 <Input
+                  variant="glass"
                   label="Heure approximative"
                   type="time"
                   leftIcon={<Clock className="h-5 w-5" />}
@@ -386,6 +398,7 @@ export const ReportForm: React.FC = () => {
               </div>
               
               <Input
+                variant="glass"
                 label="Adresse"
                 {...register('locationAddress', {
                   onChange: handleAddressChange
@@ -397,6 +410,7 @@ export const ReportForm: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <Input
+                  variant="glass"
                   label="Ville"
                   {...register('locationCity', {
                     onChange: handleAddressChange
@@ -406,6 +420,7 @@ export const ReportForm: React.FC = () => {
                 />
                 
                 <Input
+                  variant="glass"
                   label="État / Région"
                   {...register('locationState', {
                     onChange: handleAddressChange
@@ -427,10 +442,13 @@ export const ReportForm: React.FC = () => {
         </Card>
         
         {/* Description */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Description & circonstances</h2>
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 text-primary-600" />
+                Description & circonstances
+              </h2>
               {fieldsAutoFilled && (
                 <div className="flex items-center space-x-2 text-sm text-green-600">
                   <CheckCircle className="h-4 w-4" />
@@ -448,7 +466,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('description')}
                   rows={4}
-                  className="input-field !min-h-[120px]"
+                  className="glass-input !min-h-[120px]"
                   placeholder="Décrivez les circonstances de la disparition, le comportement avant la disparition et toute information pertinente..."
                 />
                 {errors.description && (
@@ -463,7 +481,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('circumstances')}
                   rows={3}
-                  className="input-field"
+                  className="glass-input"
                   placeholder="Décrivez les circonstances particulières (conflit familial, problème scolaire, etc.)..."
                 />
               </div>
@@ -475,7 +493,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('clothingDescription')}
                   rows={2}
-                  className="input-field"
+                  className="glass-input"
                   placeholder="Décrivez les vêtements, chaussures, accessoires..."
                 />
               </div>
@@ -487,7 +505,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('personalItems')}
                   rows={2}
-                  className="input-field"
+                  className="glass-input"
                   placeholder="Téléphone, portefeuille, clés, sac à dos, etc."
                 />
               </div>
@@ -499,7 +517,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('medicalInfo')}
                   rows={2}
-                  className="input-field"
+                  className="glass-input"
                   placeholder="Médicaments, conditions médicales, allergies..."
                 />
               </div>
@@ -511,7 +529,7 @@ export const ReportForm: React.FC = () => {
                 <textarea
                   {...register('behavioralInfo')}
                   rows={2}
-                  className="input-field"
+                  className="glass-input"
                   placeholder="Changements d'humeur, problèmes récents, habitudes..."
                 />
               </div>
@@ -520,14 +538,18 @@ export const ReportForm: React.FC = () => {
         </Card>
         
         {/* Coordonnées du déclarant */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900">Coordonnées du déclarant</h2>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Phone className="h-5 w-5 mr-2 text-primary-600" />
+              Coordonnées du déclarant
+            </h2>
             <p className="text-sm text-gray-600">Ces informations permettront aux autorités de vous contacter au sujet du dossier.</p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
+                variant="glass"
                 label="Votre nom complet"
                 leftIcon={<User className="h-5 w-5" />}
                 {...register('reporterName')}
@@ -536,6 +558,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Input
+                variant="glass"
                 label="Lien avec la personne disparue"
                 leftIcon={<User className="h-5 w-5" />}
                 {...register('reporterRelationship')}
@@ -545,6 +568,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Input
+                variant="glass"
                 label="Numéro de téléphone"
                 type="tel"
                 leftIcon={<Phone className="h-5 w-5" />}
@@ -555,6 +579,7 @@ export const ReportForm: React.FC = () => {
               />
               
               <Input
+                variant="glass"
                 label="Adresse email"
                 type="email"
                 leftIcon={<Mail className="h-5 w-5" />}
@@ -567,7 +592,7 @@ export const ReportForm: React.FC = () => {
         </Card>
         
         {/* Consentement et soumission */}
-        <Card>
+        <Card variant="glass">
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
@@ -575,7 +600,7 @@ export const ReportForm: React.FC = () => {
                   type="checkbox"
                   id="consent"
                   {...register('consentGiven')}
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-white/30 bg-white/20 rounded"
                 />
                 <div className="flex-1">
                   <label htmlFor="consent" className="text-sm font-medium text-gray-900">
@@ -608,6 +633,7 @@ export const ReportForm: React.FC = () => {
               </Button>
               <Button
                 type="submit"
+                variant="glass"
                 isLoading={isLoading}
                 disabled={!consentGiven}
               >

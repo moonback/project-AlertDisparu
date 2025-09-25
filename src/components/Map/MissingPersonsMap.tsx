@@ -48,38 +48,38 @@ const MapControls: React.FC<{
   showLayers: boolean;
 }> = ({ onZoomIn, onZoomOut, onResetView, onToggleLayers, onShowHelp, showLayers }) => (
   <div className="absolute top-4 right-4 z-[1000] flex flex-col space-y-2">
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 map-controls">
+    <div className="glass-card p-1 map-controls">
       <button
         onClick={onZoomIn}
-        className="p-2 hover:bg-gray-100 rounded transition-colors"
+        className="p-2 hover:bg-white/20 rounded transition-colors"
         title="Zoom avant"
       >
         <ZoomIn className="h-4 w-4" />
       </button>
       <button
         onClick={onZoomOut}
-        className="p-2 hover:bg-gray-100 rounded transition-colors"
+        className="p-2 hover:bg-white/20 rounded transition-colors"
         title="Zoom arrière"
       >
         <ZoomOut className="h-4 w-4" />
       </button>
       <button
         onClick={onResetView}
-        className="p-2 hover:bg-gray-100 rounded transition-colors"
+        className="p-2 hover:bg-white/20 rounded transition-colors"
         title="Vue par défaut"
       >
         <RotateCcw className="h-4 w-4" />
       </button>
       <button
         onClick={onToggleLayers}
-        className={`p-2 hover:bg-gray-100 rounded transition-colors ${showLayers ? 'bg-blue-100' : ''}`}
+        className={`p-2 hover:bg-white/20 rounded transition-colors ${showLayers ? 'bg-primary-500/20' : ''}`}
         title="Afficher les couches"
       >
         <Layers className="h-4 w-4" />
       </button>
       <button
         onClick={onShowHelp}
-        className="p-2 hover:bg-gray-100 rounded transition-colors"
+        className="p-2 hover:bg-white/20 rounded transition-colors"
         title="Aide"
       >
         <HelpCircle className="h-4 w-4" />
@@ -111,7 +111,7 @@ const SearchFilters: React.FC<{
   };
 
   return (
-    <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4">
+    <div className="mb-6 glass-card p-4">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
         {/* Barre de recherche */}
         <div className="flex-1 relative">
@@ -124,14 +124,14 @@ const SearchFilters: React.FC<{
               setSearchQuery(e.target.value);
               onSearch(e.target.value);
             }}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 glass-input focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
 
         {/* Bouton filtres */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center px-4 py-2 glass-button hover:bg-blue-700 transition-colors"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filtres
@@ -342,46 +342,46 @@ export const MissingPersonsMap: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      {/* En-tête avec statistiques */}
-      <div className="mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+      {/* En-tête avec effet glass */}
+      <div className="glass-hero p-6 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Carte des disparitions</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">Carte des disparitions</h1>
+            <p className="text-gray-700 text-lg">
               Carte interactive montrant les lieux où les personnes ont été vues pour la dernière fois.
             </p>
           </div>
           
           {/* Statistiques rapides */}
           <div className="flex gap-4 mt-4 md:mt-0">
-            <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-center stat-card">
+            <div className="glass-floating px-4 py-2 text-center stat-card">
               <div className="text-2xl font-bold text-red-600">{filteredReports.length}</div>
               <div className="text-sm text-gray-600">Rapports actifs</div>
             </div>
             {userLocation && (
-              <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-center stat-card">
+              <div className="glass-floating px-4 py-2 text-center stat-card" style={{animationDelay: '1s'}}>
                 <div className="text-2xl font-bold text-amber-600">{nearbyReports.length}</div>
                 <div className="text-sm text-gray-600">À proximité</div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Alerte proximité */}
-        {userLocation && nearbyReports.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 proximity-alert">
-            <div className="flex items-center mb-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
-              <h3 className="text-sm font-medium text-amber-800">
-                Personnes disparues dans votre zone
-              </h3>
-            </div>
-            <p className="text-sm text-amber-700">
-              Il y a {nearbyReports.length} personne{nearbyReports.length !== 1 ? 's' : ''} disparue{nearbyReports.length !== 1 ? 's' : ''} signalée{nearbyReports.length !== 1 ? 's' : ''} dans un rayon de 50km de votre position actuelle. Restez vigilant et signalez toute observation aux autorités locales.
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Alerte proximité */}
+      {userLocation && nearbyReports.length > 0 && (
+        <div className="glass-card-strong p-4 mb-6 proximity-alert border-amber-200/50">
+          <div className="flex items-center mb-2">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mr-2 animate-glow" />
+            <h3 className="text-sm font-medium text-amber-800">
+              Personnes disparues dans votre zone
+            </h3>
+          </div>
+          <p className="text-sm text-amber-700">
+            Il y a {nearbyReports.length} personne{nearbyReports.length !== 1 ? 's' : ''} disparue{nearbyReports.length !== 1 ? 's' : ''} signalée{nearbyReports.length !== 1 ? 's' : ''} dans un rayon de 50km de votre position actuelle. Restez vigilant et signalez toute observation aux autorités locales.
+          </p>
+        </div>
+      )}
 
       {/* Barre de recherche et filtres */}
       <SearchFilters
@@ -391,7 +391,7 @@ export const MissingPersonsMap: React.FC = () => {
       />
 
       {/* Carte principale */}
-      <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden" style={{ height: '700px' }}>
+      <div className="relative glass-card overflow-hidden" style={{ height: '700px' }}>
         <MapContainer
           ref={mapRef}
           center={mapCenter}
