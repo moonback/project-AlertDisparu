@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { MissingPerson, InvestigationObservation, SavedResolutionScenario } from '../types';
 import { useMissingPersonsStore } from '../store/missingPersonsStore';
+import { GeneratedScenariosCache } from './scenarioCache';
 
 // Configuration de l'API Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
@@ -43,6 +44,16 @@ export async function generateResolutionScenarios(
       };
     }
 
+    // Vérifier le cache d'abord
+    const cached = GeneratedScenariosCache.get(report.id, observations);
+    if (cached) {
+      console.log('🎯 Utilisation du cache pour la génération de scénarios');
+      return cached;
+    }
+
+    console.log('🚀 Génération de nouveaux scénarios via Gemini API...');
+    const startTime = performance.now();
+
     // Initialiser le modèle Gemini
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
@@ -56,6 +67,9 @@ export async function generateResolutionScenarios(
     
     // Parser la réponse JSON
     const scenariosData = parseResolutionResponse(text);
+
+    const generationTime = performance.now() - startTime;
+    console.log(`⏱️ Génération terminée en ${generationTime.toFixed(2)}ms`);
     
     // Sauvegarder les scénarios en base de données
     try {
@@ -70,27 +84,29 @@ export async function generateResolutionScenarios(
       
       const saveResult = await store.addResolutionScenario(scenarioToSave);
       
-      if (saveResult.success) {
-        return {
-          success: true,
-          data: scenariosData,
-          savedScenarioId: saveResult.id
-        };
-      } else {
-        console.warn('⚠️ Erreur lors de la sauvegarde des scénarios:', saveResult.error);
-        return {
-          success: true,
-          data: scenariosData,
-          error: `Scénarios générés mais non sauvegardés: ${saveResult.error}`
-        };
-      }
+      const response: ResolutionScenariosResponse = {
+        success: true,
+        data: scenariosData,
+        savedScenarioId: saveResult.success ? saveResult.id : undefined,
+        error: saveResult.success ? undefined : `Scénarios générés mais non sauvegardés: ${saveResult.error}`
+      };
+
+      // Mettre en cache le résultat
+      GeneratedScenariosCache.set(report.id, observations, response);
+      
+      return response;
     } catch (saveError) {
       console.warn('⚠️ Erreur lors de la sauvegarde des scénarios:', saveError);
-      return {
+      const response: ResolutionScenariosResponse = {
         success: true,
         data: scenariosData,
         error: `Scénarios générés mais non sauvegardés: ${saveError}`
       };
+      
+      // Mettre en cache même en cas d'erreur de sauvegarde
+      GeneratedScenariosCache.set(report.id, observations, response);
+      
+      return response;
     }
     
   } catch (error) {

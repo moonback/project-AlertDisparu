@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { MissingPerson, SearchFilters, InvestigationObservation, SavedResolutionScenario } from '../types';
 import { supabase } from '../lib/supabase';
+import { SavedScenariosCache } from '../services/scenarioCache';
 import { useAuthStore } from './authStore';
 
 interface MissingPersonsState {
@@ -631,6 +632,13 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
   getResolutionScenariosByReportId: async (reportId) => {
     console.log('🔍 Chargement des scénarios de résolution pour le rapport:', reportId);
     
+    // Vérifier le cache d'abord
+    const cached = SavedScenariosCache.get(reportId);
+    if (cached) {
+      console.log('🎯 Utilisation du cache pour les scénarios sauvegardés');
+      return cached;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('resolution_scenarios')
@@ -674,6 +682,9 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         createdBy: row.created_by || undefined
       }));
 
+      // Mettre en cache le résultat
+      SavedScenariosCache.set(reportId, mapped);
+      
       return mapped;
     } catch (err) {
       console.error('💥 Exception dans getResolutionScenariosByReportId:', err);
@@ -724,6 +735,9 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         console.error('❌ Erreur insertion scénario:', error);
         return { success: false, error: error.message };
       }
+
+      // Invalider le cache pour ce rapport
+      SavedScenariosCache.invalidate(scenarioData.missingPersonId);
 
       return { success: true, id: data?.id };
     } catch (err) {
@@ -780,6 +794,10 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         return { success: false, error: error.message };
       }
 
+      // Invalider le cache pour tous les rapports (car on ne connaît pas le rapportId ici)
+      // En production, on pourrait optimiser en passant le rapportId en paramètre
+      SavedScenariosCache.clear();
+
       return { success: true };
     } catch (err) {
       console.error('💥 Exception dans updateResolutionScenario:', err);
@@ -806,6 +824,10 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         console.error('❌ Erreur suppression scénario:', error);
         return { success: false, error: error.message };
       }
+
+      // Invalider le cache pour tous les rapports (car on ne connaît pas le rapportId ici)
+      // En production, on pourrait optimiser en passant le rapportId en paramètre
+      SavedScenariosCache.clear();
 
       return { success: true };
     } catch (err) {
