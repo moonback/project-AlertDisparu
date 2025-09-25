@@ -5,18 +5,26 @@ import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Alert } from '../ui/Alert';
-import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, Clock, Eye, Info, AlertCircle, Search, CheckCircle, TrendingUp, Camera, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, Clock, Eye, Info, AlertCircle, Search, CheckCircle, TrendingUp, Camera, Plus, Lightbulb } from 'lucide-react';
 import { CaseTypeBadge } from '../ui/CaseTypeBadge';
 import { InvestigationObservations } from '../Investigation/InvestigationObservations';
 import { InvestigationObservation } from '../../types';
+import { ResolutionScenarios } from './ResolutionScenarios';
+import { generateResolutionScenarios, ResolutionScenariosResponse } from '../../services/geminiResolutionScenarios';
+import { SavedResolutionScenario } from '../../types';
 
 export const ReportDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getReportById, getObservationsByReportId } = useMissingPersonsStore();
+  const { getReportById, getObservationsByReportId, getResolutionScenariosByReportId } = useMissingPersonsStore();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'investigation'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'investigation' | 'scenarios'>('details');
   const [observations, setObservations] = useState<InvestigationObservation[]>([]);
   const [observationsLoading, setObservationsLoading] = useState(false);
+  const [scenariosData, setScenariosData] = useState<ResolutionScenariosResponse['data'] | null>(null);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
+  const [scenariosError, setScenariosError] = useState<string | null>(null);
+  const [savedScenarios, setSavedScenarios] = useState<SavedResolutionScenario[]>([]);
+  const [savedScenariosLoading, setSavedScenariosLoading] = useState(false);
   
   const report = id ? getReportById(id) : null;
 
@@ -47,6 +55,17 @@ export const ReportDetail: React.FC = () => {
         .finally(() => setObservationsLoading(false));
     }
   }, [report?.id, getObservationsByReportId]);
+
+  // Charger les scénarios sauvegardés quand le rapport change
+  useEffect(() => {
+    if (report?.id) {
+      setSavedScenariosLoading(true);
+      getResolutionScenariosByReportId(report.id)
+        .then(setSavedScenarios)
+        .catch(console.error)
+        .finally(() => setSavedScenariosLoading(false));
+    }
+  }, [report?.id, getResolutionScenariosByReportId]);
 
   if (!report) {
     return (
@@ -121,6 +140,50 @@ export const ReportDetail: React.FC = () => {
 
   const stats = getObservationStats();
 
+  // Fonction pour générer les scénarios de résolution
+  const handleGenerateScenarios = async () => {
+    if (!report) return;
+    
+    setScenariosLoading(true);
+    setScenariosError(null);
+    setScenariosData(null);
+    
+    try {
+      const response = await generateResolutionScenarios(report, observations);
+      
+      if (response.success && response.data) {
+        setScenariosData(response.data);
+        setActiveTab('scenarios');
+        
+        // Recharger les scénarios sauvegardés si la génération a été sauvegardée
+        if (response.savedScenarioId) {
+          getResolutionScenariosByReportId(report.id)
+            .then(setSavedScenarios)
+            .catch(console.error);
+        }
+      } else {
+        setScenariosError(response.error || 'Erreur lors de la génération des scénarios');
+      }
+    } catch (error) {
+      setScenariosError('Erreur lors de la génération des scénarios');
+      console.error('Erreur génération scénarios:', error);
+    } finally {
+      setScenariosLoading(false);
+    }
+  };
+
+  // Fonction pour réessayer la génération
+  const handleRetryScenarios = () => {
+    handleGenerateScenarios();
+  };
+
+  // Fonction pour fermer les scénarios
+  const handleCloseScenarios = () => {
+    setScenariosData(null);
+    setScenariosError(null);
+    setActiveTab('details');
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -154,9 +217,19 @@ export const ReportDetail: React.FC = () => {
               />
             </div>
           </div>
-          <Button onClick={handleShare} leftIcon={<Share className="h-4 w-4" />}>
-            Partager le rapport
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleGenerateScenarios} 
+              leftIcon={<Lightbulb className="h-4 w-4" />}
+              disabled={scenariosLoading}
+              variant="outline"
+            >
+              {scenariosLoading ? 'Génération...' : 'Générer scénarios IA'}
+            </Button>
+            <Button onClick={handleShare} leftIcon={<Share className="h-4 w-4" />}>
+              Partager le rapport
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -183,6 +256,16 @@ export const ReportDetail: React.FC = () => {
               }`}
             >
               Investigation
+            </button>
+            <button
+              onClick={() => setActiveTab('scenarios')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'scenarios'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Scénarios IA
             </button>
           </nav>
         </div>
@@ -536,6 +619,36 @@ export const ReportDetail: React.FC = () => {
 
         </div>
       </div>
+      ) : activeTab === 'scenarios' ? (
+        <ResolutionScenarios
+          scenarios={scenariosData || undefined}
+          savedScenarios={savedScenarios}
+          isLoading={scenariosLoading}
+          savedScenariosLoading={savedScenariosLoading}
+          error={scenariosError || undefined}
+          onRetry={handleRetryScenarios}
+          onClose={handleCloseScenarios}
+          onUpdateScenario={async (id, updates) => {
+            const store = useMissingPersonsStore.getState();
+            const result = await store.updateResolutionScenario(id, updates);
+            if (result.success) {
+              // Recharger les scénarios sauvegardés
+              getResolutionScenariosByReportId(report.id)
+                .then(setSavedScenarios)
+                .catch(console.error);
+            }
+          }}
+          onDeleteScenario={async (id) => {
+            const store = useMissingPersonsStore.getState();
+            const result = await store.deleteResolutionScenario(id);
+            if (result.success) {
+              // Recharger les scénarios sauvegardés
+              getResolutionScenariosByReportId(report.id)
+                .then(setSavedScenarios)
+                .catch(console.error);
+            }
+          }}
+        />
       ) : (
         <InvestigationObservations />
       )}
