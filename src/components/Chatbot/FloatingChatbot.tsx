@@ -119,11 +119,6 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     // Vérifier que le texte n'est pas vide après nettoyage
     if (!cleanText || cleanText.length < 3) return;
     
-    // Arrêter toute lecture en cours
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
     // Configuration améliorée de la voix
@@ -131,6 +126,16 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     utterance.rate = 0.85; // Vitesse plus lente pour une meilleure compréhension
     utterance.pitch = 1.1; // Légèrement plus aigu pour une voix plus claire
     utterance.volume = 0.9; // Volume plus élevé
+    
+    // Arrêter toute lecture en cours de manière plus douce
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      window.speechSynthesis.cancel();
+      // Petit délai pour éviter les conflits
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 100);
+      return;
+    }
 
     // Sélectionner la meilleure voix française disponible
     const voices = window.speechSynthesis.getVoices();
@@ -191,7 +196,12 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     };
     
     utterance.onerror = (event) => {
-      console.error('🎤 Erreur TTS:', event.error);
+      // Ne pas logger les erreurs "interrupted" car elles sont normales
+      if (event.error !== 'interrupted') {
+        console.error('🎤 Erreur TTS:', event.error);
+      } else {
+        console.log('🎤 Lecture TTS interrompue (normal)');
+      }
     };
 
     window.speechSynthesis.speak(utterance);
@@ -199,7 +209,8 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
 
   // Fonction pour arrêter la lecture TTS
   const stopSpeaking = () => {
-    if (window.speechSynthesis.speaking) {
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      console.log('🎤 Arrêt de la lecture TTS');
       window.speechSynthesis.cancel();
     }
   };

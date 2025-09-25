@@ -33,7 +33,7 @@ export class ChatbotPromptSystem {
     });
 
     const basePrompt = this.getBaseSystemPrompt();
-    const contextPrompt = this.buildDataContext(availableData);
+    const contextPrompt = this.buildDataContext(availableData, user);
     const userContextPrompt = this.buildUserContext(user);
     const capabilitiesPrompt = this.getCapabilitiesPrompt();
     const guidelinesPrompt = this.getGuidelinesPrompt();
@@ -99,7 +99,7 @@ PERSONNALISATION:
         return `CONTEXTE AUTORITÉ: Accès complet, coordination investigations, validation données`;
 
       case 'family':
-        return `CONTEXTE FAMILLE: Support émotionnel, actions concrètes, compréhension procédures`;
+        return `CONTEXTE FAMILLE: Support émotionnel, actions concrètes, compréhension procédures. ACCÈS LIMITÉ: Seulement aux signalements de votre famille.`;
 
       case 'volunteer':
         return `CONTEXTE BÉNÉVOLE: Recherche terrain, informations publiques, guidance sécurité`;
@@ -116,12 +116,41 @@ PERSONNALISATION:
     reports: MissingPerson[];
     observations: InvestigationObservation[];
     scenarios: SavedResolutionScenario[];
-  }): string {
-    const { reports, observations, scenarios } = availableData;
+  }, user?: User): string {
+    let { reports, observations, scenarios } = availableData;
     
     // Vérification de sécurité
     if (!reports || !observations || !scenarios) {
       return "Erreur: Données non disponibles";
+    }
+
+    // Filtrer les données selon le rôle de l'utilisateur
+    if (user?.role === 'family') {
+      // Les familles ne voient que leurs propres signalements
+      const userReports = reports.filter(report => report.createdBy === user.id);
+      const userReportIds = userReports.map(report => report.id);
+      
+      // Filtrer les observations et scénarios liés aux signalements de la famille
+      observations = observations.filter(obs => userReportIds.includes(obs.missingPersonId));
+      scenarios = scenarios.filter(scenario => userReportIds.includes(scenario.missingPersonId));
+      reports = userReports;
+      
+      console.log(`🔒 Accès famille: ${reports.length} signalements, ${observations.length} observations, ${scenarios.length} scénarios`);
+      
+      // Message informatif si aucun signalement
+      if (reports.length === 0) {
+        return `
+DONNÉES DISPONIBLES (${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}):
+
+📊 SIGNALEMENTS FAMILLE (0):
+Aucun signalement trouvé pour votre famille. Pour créer un signalement, contactez les autorités compétentes.
+
+ℹ️ INFORMATIONS IMPORTANTES:
+- Vous avez accès uniquement aux signalements de votre famille
+- Pour des informations sur d'autres cas, contactez les autorités
+- En cas d'urgence, appelez immédiatement les services d'urgence
+        `;
+      }
     }
     
     return `

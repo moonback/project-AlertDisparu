@@ -12,6 +12,7 @@ export type CaseType = 'disappearance' | 'runaway' | 'abduction' | 'missing_adul
 export type CasePriority = 'low' | 'medium' | 'high' | 'critical';
 
 export interface MissingPerson {
+  createdBy: string;
   id: string;
   firstName: string;
   lastName: string;
