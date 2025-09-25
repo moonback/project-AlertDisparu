@@ -112,7 +112,7 @@ export const UserMenu: React.FC = () => {
               </Link>
 
               <Link
-                to="/rapports"
+                to="/mes-alertes"
                 className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors group"
               >
                 <Bell className="h-4 w-4 mr-3 text-gray-400 group-hover:text-primary-600 transition-colors" />

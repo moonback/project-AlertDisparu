@@ -8,6 +8,8 @@ import { RegisterForm } from './components/Auth/RegisterForm';
 import { HomePage } from './pages/HomePage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { MyAlertsPage } from './pages/MyAlertsPage';
+import { EditReportPage } from './pages/EditReportPage';
 import { ReportForm } from './components/Reports/ReportForm';
 import { ReportDetail } from './components/Reports/ReportDetail';
 import { MissingPersonsMap } from './components/Map/MissingPersonsMap';
@@ -98,6 +100,26 @@ function App() {
             <Layout>
               <ProfilePage />
             </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/mes-alertes" element={
+          <ProtectedRoute>
+            <MyAlertsPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/rapports/nouveau" element={
+          <ProtectedRoute>
+            <Layout>
+              <ReportForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/rapports/:id/modifier" element={
+          <ProtectedRoute>
+            <EditReportPage />
           </ProtectedRoute>
         } />
         

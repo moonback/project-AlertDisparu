@@ -61,6 +61,18 @@ export const Header: React.FC = () => {
               </Link>
               
               <Link
+                to="/mes-alertes"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActiveRoute('/mes-alertes')
+                    ? 'text-primary-600 bg-primary-50 shadow-soft'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span>Mes Alertes</span>
+              </Link>
+              
+              <Link
                 to="/signalement"
                 className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary-700 transition-all duration-200 shadow-soft hover:shadow-medium transform hover:scale-105"
               >
@@ -129,6 +141,19 @@ export const Header: React.FC = () => {
               >
                 <MapPin className="h-5 w-5" />
                 <span>Vue carte</span>
+              </Link>
+              
+              <Link
+                to="/mes-alertes"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                  isActiveRoute('/mes-alertes')
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                <AlertTriangle className="h-5 w-5" />
+                <span>Mes Alertes</span>
               </Link>
               
               <Link
