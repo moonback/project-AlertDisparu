@@ -1,94 +1,114 @@
 import { create } from 'zustand';
 import { MissingPerson, SearchFilters } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface MissingPersonsState {
   reports: MissingPerson[];
   filteredReports: MissingPerson[];
   searchFilters: SearchFilters;
   isLoading: boolean;
-  addReport: (report: Omit<MissingPerson, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
+  loadReports: () => Promise<void>;
+  addReport: (report: Omit<MissingPerson, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Promise<{ success: boolean; error?: string; id?: string }>;
   updateFilters: (filters: SearchFilters) => void;
   getReportById: (id: string) => MissingPerson | undefined;
   calculateDistance: (lat1: number, lon1: number, lat2: number, lon2: number) => number;
 }
 
-// Mock data for demonstration
-const mockReports: MissingPerson[] = [
-  {
-    id: '1',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    age: 28,
-    gender: 'female',
-    photo: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200',
-    dateDisappeared: '2024-01-15',
-    locationDisappeared: {
-      address: '123 Main Street',
-      city: 'Austin',
-      state: 'TX',
-      country: 'USA',
-      coordinates: { lat: 30.2672, lng: -97.7431 }
-    },
-    description: 'Last seen wearing a blue jacket and jeans. She was walking her dog in the park.',
-    reporterContact: {
-      name: 'Mark Johnson',
-      relationship: 'Husband',
-      phone: '+1-555-0123',
-      email: 'mark.johnson@email.com'
-    },
-    consentGiven: true,
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-15T10:30:00Z',
-    status: 'active'
-  },
-  {
-    id: '2',
-    firstName: 'Michael',
-    lastName: 'Chen',
-    age: 16,
-    gender: 'male',
-    photo: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
-    dateDisappeared: '2024-01-20',
-    locationDisappeared: {
-      address: '456 Oak Avenue',
-      city: 'Seattle',
-      state: 'WA',
-      country: 'USA',
-      coordinates: { lat: 47.6062, lng: -122.3321 }
-    },
-    description: 'Missing after school. Was supposed to meet friends at the library but never showed up.',
-    reporterContact: {
-      name: 'Lisa Chen',
-      relationship: 'Mother',
-      phone: '+1-555-0456',
-      email: 'lisa.chen@email.com'
-    },
-    consentGiven: true,
-    createdAt: '2024-01-20T15:45:00Z',
-    updatedAt: '2024-01-20T15:45:00Z',
-    status: 'active'
-  }
-];
+// Pas de données mock en prod: on charge depuis Supabase
 
 export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => ({
-  reports: mockReports,
-  filteredReports: mockReports,
+  reports: [],
+  filteredReports: [],
   searchFilters: {},
   isLoading: false,
   
-  addReport: (reportData) => {
-    const newReport: MissingPerson = {
-      ...reportData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'active'
-    };
-    
-    set(state => ({
-      reports: [...state.reports, newReport],
-      filteredReports: [...state.filteredReports, newReport]
+  loadReports: async () => {
+    set({ isLoading: true });
+    const { data, error } = await supabase
+      .from('missing_persons')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      set({ isLoading: false });
+      console.error('Erreur chargement rapports:', error.message);
+      return;
+    }
+
+    const mapped: MissingPerson[] = (data || []).map(row => ({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      age: row.age,
+      gender: row.gender,
+      photo: row.photo || undefined,
+      dateDisappeared: row.date_disappeared,
+      locationDisappeared: {
+        address: row.location_address,
+        city: row.location_city,
+        state: row.location_state,
+        country: row.location_country,
+        coordinates: { lat: row.location_lat, lng: row.location_lng }
+      },
+      description: row.description,
+      reporterContact: {
+        name: row.reporter_name,
+        relationship: row.reporter_relationship,
+        phone: row.reporter_phone,
+        email: row.reporter_email,
+      },
+      consentGiven: row.consent_given,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      status: row.status,
     }));
+
+    set({ reports: mapped, filteredReports: mapped, isLoading: false });
+  },
+
+  addReport: async (reportData) => {
+    const { data: userRes } = await supabase.auth.getUser();
+    const authUser = userRes?.user;
+    if (!authUser) {
+      return { success: false, error: 'Utilisateur non authentifié' };
+    }
+    const payload = {
+      first_name: reportData.firstName,
+      last_name: reportData.lastName,
+      age: reportData.age,
+      gender: reportData.gender,
+      photo: reportData.photo || null,
+      date_disappeared: reportData.dateDisappeared,
+      location_address: reportData.locationDisappeared.address,
+      location_city: reportData.locationDisappeared.city,
+      location_state: reportData.locationDisappeared.state,
+      location_country: reportData.locationDisappeared.country,
+      location_lat: reportData.locationDisappeared.coordinates.lat,
+      location_lng: reportData.locationDisappeared.coordinates.lng,
+      description: reportData.description,
+      reporter_name: reportData.reporterContact.name,
+      reporter_relationship: reportData.reporterContact.relationship,
+      reporter_phone: reportData.reporterContact.phone,
+      reporter_email: reportData.reporterContact.email,
+      consent_given: reportData.consentGiven,
+      status: 'active',
+      created_by: authUser.id,
+    };
+
+    const { data, error } = await supabase
+      .from('missing_persons')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Erreur insertion rapport:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    // Recharger la liste depuis la base pour rester source de vérité
+    await get().loadReports();
+    return { success: true, id: data?.id };
   },
   
   updateFilters: (filters) => {

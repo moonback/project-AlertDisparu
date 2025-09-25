@@ -76,10 +76,10 @@ export const ReportForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Simulate coordinates for the address (in production, use geocoding API)
-      const mockCoordinates = { lat: 40.7128, lng: -74.0060 };
+      // TODO: remplacer par géocodage réel si besoin
+      const mockCoordinates = { lat: 48.8566, lng: 2.3522 };
       
-      addReport({
+      const result = await addReport({
         firstName: data.firstName,
         lastName: data.lastName,
         age: data.age,
@@ -90,7 +90,7 @@ export const ReportForm: React.FC = () => {
           address: data.locationAddress,
           city: data.locationCity,
           state: data.locationState,
-          country: 'USA',
+          country: 'France',
           coordinates: mockCoordinates
         },
         description: data.description,
@@ -103,7 +103,9 @@ export const ReportForm: React.FC = () => {
         consentGiven: data.consentGiven
       });
       
-      navigate('/rapports');
+      if (result.success) {
+        navigate('/rapports');
+      }
     } catch (error) {
       console.error('Error submitting report:', error);
     } finally {

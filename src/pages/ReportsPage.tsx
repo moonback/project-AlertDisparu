@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useMissingPersonsStore } from '../store/missingPersonsStore';
 import { SearchFilters } from '../components/Reports/SearchFilters';
 import { ReportCard } from '../components/Reports/ReportCard';
@@ -7,7 +7,11 @@ import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const ReportsPage: React.FC = () => {
-  const { filteredReports, searchFilters } = useMissingPersonsStore();
+  const { filteredReports, searchFilters, loadReports, isLoading } = useMissingPersonsStore();
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -29,6 +33,10 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       <SearchFilters />
+
+      {isLoading && (
+        <div className="text-center text-gray-600 py-8">Chargement des rapports...</div>
+      )}
 
       {filteredReports.length === 0 ? (
         <div className="text-center py-12">

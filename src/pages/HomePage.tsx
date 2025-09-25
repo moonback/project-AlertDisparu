@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useMissingPersonsStore } from '../store/missingPersonsStore';
@@ -8,7 +8,11 @@ import { Search, MapPin, AlertTriangle, Users, Clock, Shield } from 'lucide-reac
 
 export const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuthStore();
-  const { reports } = useMissingPersonsStore();
+  const { reports, loadReports } = useMissingPersonsStore();
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
   
   const activeReports = reports.filter(report => report.status === 'active');
   const recentReports = reports

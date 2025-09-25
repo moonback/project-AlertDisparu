@@ -1,20 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-id.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your_supabase_anon_key_here'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Vérifier si les variables d'environnement sont configurées
-const isConfigured = supabaseUrl !== 'https://your-project-id.supabase.co' && 
-                     supabaseAnonKey !== 'your_supabase_anon_key_here'
-
-if (!isConfigured) {
-  console.warn('⚠️ Variables d\'environnement Supabase non configurées. L\'application fonctionnera en mode démo.')
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Variables d\'environnement Supabase manquantes')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-// Export pour vérifier la configuration
-export const isSupabaseConfigured = isConfigured
 
 // Types pour la base de données
 export interface Database {

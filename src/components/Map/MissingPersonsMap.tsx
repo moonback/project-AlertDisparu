@@ -16,9 +16,13 @@ L.Icon.Default.mergeOptions({
 });
 
 export const MissingPersonsMap: React.FC = () => {
-  const { filteredReports, calculateDistance } = useMissingPersonsStore();
+  const { filteredReports, calculateDistance, loadReports } = useMissingPersonsStore();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyReports, setNearbyReports] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
 
   useEffect(() => {
     if (navigator.geolocation) {
