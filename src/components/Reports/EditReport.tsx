@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,12 +10,23 @@ import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
-import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock, AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { 
+  Upload, 
+  X, 
+  MapPin, 
+  User, 
+  Calendar, 
+  Phone, 
+  Mail, 
+  Clock, 
+  AlertTriangle,
+  ArrowLeft,
+  Save
+} from 'lucide-react';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
 
-const reportSchema = z.object({
+const editReportSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
   lastName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   age: z
@@ -27,6 +39,7 @@ const reportSchema = z.object({
   caseType: z.enum(['disappearance', 'runaway', 'abduction', 'missing_adult', 'missing_child'], {
     required_error: 'Veuillez sélectionner le type de cas'
   }),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
   dateDisappeared: z.string().min(1, 'La date est requise'),
   timeDisappeared: z.string().optional(),
   locationAddress: z.string().min(5, "L'adresse doit contenir au moins 5 caractères"),
@@ -42,12 +55,11 @@ const reportSchema = z.object({
   reporterRelationship: z.string().min(2, 'Le lien avec la personne doit être précisé'),
   reporterPhone: z.string().min(10, 'Le numéro de téléphone doit contenir au moins 10 chiffres'),
   reporterEmail: z.string().email('Veuillez entrer une adresse email valide'),
-  consentGiven: z.boolean().refine(val => val === true, {
-    message: 'Vous devez donner votre consentement pour partager ces informations'
-  })
+  status: z.enum(['active', 'found', 'closed']),
+  isEmergency: z.boolean()
 });
 
-type ReportFormData = z.infer<typeof reportSchema>;
+type EditReportFormData = z.infer<typeof editReportSchema>;
 
 const genderOptions = [
   { value: 'male', label: 'Homme' },
@@ -63,26 +75,104 @@ const caseTypeOptions = [
   { value: 'missing_child', label: 'Enfant disparu' }
 ];
 
-export const ReportForm: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
-  const { addReport } = useMissingPersonsStore();
+const priorityOptions = [
+  { value: 'low', label: 'Faible' },
+  { value: 'medium', label: 'Moyenne' },
+  { value: 'high', label: 'Élevée' },
+  { value: 'critical', label: 'Critique' }
+];
+
+const statusOptions = [
+  { value: 'active', label: 'Actif' },
+  { value: 'found', label: 'Retrouvé' },
+  { value: 'closed', label: 'Fermé' }
+];
+
+export const EditReport: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingReport, setIsLoadingReport] = useState(true);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
+  const { getReportById, updateReport } = useMissingPersonsStore();
   
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch
-  } = useForm<ReportFormData>({
-    resolver: zodResolver(reportSchema)
+    watch,
+    reset
+  } = useForm<EditReportFormData>({
+    resolver: zodResolver(editReportSchema)
   });
   
-  const consentGiven = watch('consentGiven');
+  const isEmergency = watch('isEmergency');
   
-  const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  // Charger le rapport existant
+  useEffect(() => {
+    const loadReport = async () => {
+      if (!id) return;
+      
+      setIsLoadingReport(true);
+      setError(null);
+      
+      try {
+        const report = getReportById(id);
+        if (!report) {
+          setError('Rapport introuvable');
+          return;
+        }
+
+        // Pré-remplir le formulaire
+        reset({
+          firstName: report.firstName,
+          lastName: report.lastName,
+          age: report.age,
+          gender: report.gender,
+          caseType: report.caseType,
+          priority: report.priority,
+          dateDisappeared: report.dateDisappeared,
+          timeDisappeared: report.timeDisappeared || '',
+          locationAddress: report.locationDisappeared.address,
+          locationCity: report.locationDisappeared.city,
+          locationState: report.locationDisappeared.state,
+          description: report.description,
+          circumstances: report.circumstances || '',
+          clothingDescription: report.clothingDescription || '',
+          personalItems: report.personalItems || '',
+          medicalInfo: report.medicalInfo || '',
+          behavioralInfo: report.behavioralInfo || '',
+          reporterName: report.reporterContact.name,
+          reporterRelationship: report.reporterContact.relationship,
+          reporterPhone: report.reporterContact.phone,
+          reporterEmail: report.reporterContact.email,
+          status: report.status,
+          isEmergency: report.isEmergency
+        });
+
+        // Charger l'image existante
+        if (report.photo) {
+          setUploadedImage(report.photo);
+        }
+
+        // Géocoder l'adresse existante
+        geocodeAddress(report.locationDisappeared.address, report.locationDisappeared.city, report.locationDisappeared.state);
+        
+      } catch (err) {
+        setError('Erreur lors du chargement du rapport');
+        console.error('Error loading report:', err);
+      } finally {
+        setIsLoadingReport(false);
+      }
+    };
+
+    loadReport();
+  }, [id, getReportById, reset, geocodeAddress]);
+  
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -91,35 +181,35 @@ export const ReportForm: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  };
   
   const removeImage = () => {
     setUploadedImage(null);
   };
 
   // Géocoder automatiquement quand les champs d'adresse changent
-  const handleAddressChange = useCallback(() => {
+  const handleAddressChange = () => {
     const address = watch('locationAddress');
     const city = watch('locationCity');
     const state = watch('locationState');
     
     geocodeAddress(address, city, state);
-  }, [watch, geocodeAddress]);
+  };
   
-  const onSubmit = async (data: ReportFormData) => {
+  const onSubmit = async (data: EditReportFormData) => {
+    if (!id) return;
+    
     setIsLoading(true);
-    console.log('🚀 Début soumission rapport:', data);
+    setError(null);
     
     try {
       // Utiliser les coordonnées géocodées si disponibles, sinon géocoder maintenant
       let coordinates = geocodingResult?.coordinates;
       
       if (!coordinates) {
-        console.log('🌍 Géocodage en cours pour la soumission...');
         try {
           const result = await geocodeLocation(data.locationAddress, data.locationCity, data.locationState, 'France');
           coordinates = result.coordinates;
-          console.log('✅ Géocodage réussi pour la soumission:', coordinates);
         } catch (error) {
           console.warn('⚠️ Géocodage échoué, utilisation de coordonnées par défaut:', error);
           // Coordonnées par défaut (Paris) en cas d'échec
@@ -127,15 +217,15 @@ export const ReportForm: React.FC = () => {
         }
       }
       
-      const reportData = {
+      const updateData = {
         firstName: data.firstName,
         lastName: data.lastName,
         age: data.age,
         gender: data.gender,
-        photo: uploadedImage || undefined,
         caseType: data.caseType,
+        priority: data.priority,
         dateDisappeared: data.dateDisappeared,
-        timeDisappeared: data.timeDisappeared,
+        timeDisappeared: data.timeDisappeared || undefined,
         locationDisappeared: {
           address: data.locationAddress,
           city: data.locationCity,
@@ -144,52 +234,88 @@ export const ReportForm: React.FC = () => {
           coordinates: coordinates
         },
         description: data.description,
-        circumstances: data.circumstances,
-        clothingDescription: data.clothingDescription,
-        personalItems: data.personalItems,
-        medicalInfo: data.medicalInfo,
-        behavioralInfo: data.behavioralInfo,
+        circumstances: data.circumstances || undefined,
+        clothingDescription: data.clothingDescription || undefined,
+        personalItems: data.personalItems || undefined,
+        medicalInfo: data.medicalInfo || undefined,
+        behavioralInfo: data.behavioralInfo || undefined,
         reporterContact: {
           name: data.reporterName,
           relationship: data.reporterRelationship,
           phone: data.reporterPhone,
           email: data.reporterEmail
         },
-        consentGiven: data.consentGiven,
-        priority: 'medium', // Sera calculé automatiquement par le trigger
-        isEmergency: false // Sera calculé automatiquement par le trigger
+        status: data.status,
+        isEmergency: data.isEmergency,
+        photo: uploadedImage || undefined
       };
       
-      console.log('📝 Données du rapport à envoyer:', reportData);
-      
-      const result = await addReport(reportData);
-      
-      console.log('📊 Résultat de l\'ajout:', result);
+      const result = await updateReport(id, updateData);
       
       if (result.success) {
-        console.log('✅ Rapport ajouté avec succès, redirection...');
-        navigate('/rapports');
+        navigate(`/rapports/${id}`);
       } else {
-        console.error('❌ Erreur lors de l\'ajout:', result.error);
-        alert(`Erreur: ${result.error}`);
+        setError(result.error || 'Erreur lors de la mise à jour');
       }
     } catch (error) {
-      console.error('💥 Erreur exception lors de la soumission:', error);
-      alert(`Erreur inattendue: ${error}`);
+      setError(`Erreur inattendue: ${error}`);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isLoadingReport) {
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Chargement du rapport...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !isLoadingReport) {
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <Alert variant="error" title="Erreur">
+          {error}
+        </Alert>
+        <div className="mt-4">
+          <Button onClick={() => navigate('/mes-alertes')} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            Retour à mes alertes
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center mb-4">
-          <User className="h-10 w-10 text-primary-600 mr-2" />
-          <h1 className="text-3xl font-bold text-gray-900">Signaler une personne disparue</h1>
+      <div className="mb-8">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/mes-alertes')}
+          leftIcon={<ArrowLeft className="h-4 w-4" />}
+          className="mb-4"
+        >
+          Retour à mes alertes
+        </Button>
+        
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-4">
+            <AlertTriangle className="h-10 w-10 text-primary-600 mr-2" />
+            <h1 className="text-3xl font-bold text-gray-900">Modifier le signalement</h1>
+          </div>
+          <p className="mt-2 text-gray-600">Mettez à jour les informations du signalement.</p>
         </div>
-        <p className="mt-2 text-gray-600">Merci de fournir un maximum d'informations pour aider les recherches.</p>
       </div>
+      
+      {error && (
+        <Alert variant="error" title="Erreur" className="mb-6">
+          {error}
+        </Alert>
+      )}
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Informations sur la personne disparue */}
@@ -238,6 +364,37 @@ export const ReportForm: React.FC = () => {
                 error={errors.caseType?.message}
                 required
               />
+              
+              <Select
+                label="Priorité"
+                options={priorityOptions}
+                {...register('priority')}
+                error={errors.priority?.message}
+                required
+              />
+            </div>
+            
+            {/* Statut et urgence */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Select
+                label="Statut du cas"
+                options={statusOptions}
+                {...register('status')}
+                error={errors.status?.message}
+                required
+              />
+              
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="isEmergency"
+                  {...register('isEmergency')}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isEmergency" className="text-sm font-medium text-gray-900">
+                  Cas d'urgence
+                </label>
+              </div>
             </div>
             
             {/* Téléversement de la photo */}
@@ -487,52 +644,23 @@ export const ReportForm: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* Consentement et soumission */}
+        {/* Actions */}
         <Card>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <input
-                  type="checkbox"
-                  id="consent"
-                  {...register('consentGiven')}
-                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <div className="flex-1">
-                  <label htmlFor="consent" className="text-sm font-medium text-gray-900">
-                    Consentement au partage d'informations <span className="text-red-500">*</span>
-                  </label>
-                  <p className="text-sm text-gray-600 mt-1">
-                    J'autorise la diffusion de ces informations pour aider à retrouver cette personne disparue. 
-                    Je comprends que ces informations pourront être partagées avec les forces de l'ordre, les bénévoles 
-                    et le public afin d'aider aux recherches. Je confirme être autorisé à partager ces informations.
-                  </p>
-                </div>
-              </div>
-              {errors.consentGiven && (
-                <p className="text-sm text-red-600">{errors.consentGiven.message}</p>
-              )}
-              
-              <Alert variant="info" title="Confidentialité (RGPD)">
-                Vos données personnelles ne seront utilisées que pour la recherche de la personne disparue et seront 
-                traitées conformément à notre politique de confidentialité.
-              </Alert>
-            </div>
-            
-            <div className="mt-6 flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/rapports')}
+                onClick={() => navigate('/mes-alertes')}
               >
                 Annuler
               </Button>
               <Button
                 type="submit"
                 isLoading={isLoading}
-                disabled={!consentGiven}
+                leftIcon={<Save className="h-4 w-4" />}
               >
-                Envoyer le signalement
+                Sauvegarder les modifications
               </Button>
             </div>
           </CardContent>
