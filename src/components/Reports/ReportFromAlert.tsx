@@ -88,6 +88,70 @@ export const ReportFromAlert: React.FC = () => {
     // Convertir l'image de l'affiche en base64 pour l'inclure comme photo
     const photoBase64 = await fileToBase64(file);
 
+    // Construire la description détaillée pour le champ principal
+    const detailedDescription = [
+      result.description || 'Informations extraites depuis une affiche « Alerte Enlèvement »',
+      '',
+      '=== DESCRIPTION PHYSIQUE ===',
+      ...physicalDesc.map(desc => `• ${desc}`),
+      '',
+      '=== VÊTEMENTS ET ACCESSOIRES ===',
+      ...clothingDesc.map(desc => `• ${desc}`),
+      '',
+      '=== SIGNES PARTICULIERS ===',
+      ...marksDesc.map(desc => `• ${desc}`),
+      '',
+      '=== VÉHICULE ET SUSPECT ===',
+      ...(result.vehicle ? [`• Véhicule: ${result.vehicle}`] : []),
+      ...(result.licensePlate ? [`• Immatriculation: ${result.licensePlate}`] : []),
+      ...(result.suspect ? [`• Suspect: ${result.suspect}`] : []),
+      ...(result.suspectDescription ? [`• Description suspect: ${result.suspectDescription}`] : []),
+      '',
+      '=== INFORMATIONS DE CONTACT ===',
+      ...(result.contactPhone ? [`• Téléphone: ${result.contactPhone}`] : []),
+      ...(result.contactEmail ? [`• Email: ${result.contactEmail}`] : []),
+      ...(result.contactWebsite ? [`• Site web: ${result.contactWebsite}`] : [])
+    ].filter(Boolean).join('\n');
+
+    // Construire les circonstances spécifiques
+    const specificCircumstances = [
+      result.circumstances || 'Circonstances extraites de l\'affiche officielle',
+      result.abductedAt ? `Date et heure: ${new Date(result.abductedAt).toLocaleString('fr-FR')}` : '',
+      result.abductedLocation ? `Lieu: ${result.abductedLocation}` : '',
+      result.abductedLocationDetails ? `Adresse précise: ${result.abductedLocationDetails}` : '',
+      result.alertType ? `Type d'alerte: ${result.alertType}` : '',
+      result.authorities ? `Autorités: ${result.authorities}` : ''
+    ].filter(Boolean).join('\n');
+
+    // Construire la description des vêtements
+    const clothingDetails = [
+      result.clothing || 'Vêtements mentionnés sur l\'affiche',
+      result.accessories ? `Accessoires: ${result.accessories}` : '',
+      result.shoes ? `Chaussures: ${result.shoes}` : ''
+    ].filter(Boolean).join('\n');
+
+    // Construire les objets personnels
+    const personalItemsDetails = [
+      result.accessories || 'Accessoires mentionnés sur l\'affiche',
+      result.vehicle ? `Véhicule utilisé: ${result.vehicle}` : '',
+      result.licensePlate ? `Immatriculation: ${result.licensePlate}` : ''
+    ].filter(Boolean).join('\n');
+
+    // Construire les informations médicales
+    const medicalInfoDetails = [
+      result.scars ? `Cicatrices: ${result.scars}` : '',
+      result.tattoos ? `Tatouages: ${result.tattoos}` : '',
+      result.piercings ? `Piercings: ${result.piercings}` : '',
+      result.distinctiveMarks ? `Signes particuliers: ${result.distinctiveMarks}` : ''
+    ].filter(Boolean).join('\n') || 'Aucune information médicale spécifique mentionnée sur l\'affiche';
+
+    // Construire les informations comportementales
+    const behavioralInfoDetails = [
+      result.suspectDescription ? `Description du suspect: ${result.suspectDescription}` : '',
+      result.circumstances ? `Circonstances rapportées: ${result.circumstances}` : '',
+      result.urgency ? `Niveau d'urgence: ${result.urgency}` : ''
+    ].filter(Boolean).join('\n') || 'Informations comportementales extraites de l\'affiche officielle';
+
     return {
       firstName: firstName || 'Inconnu',
       lastName: lastName || 'Inconnu',
@@ -104,12 +168,12 @@ export const ReportFromAlert: React.FC = () => {
         country: 'France',
         coordinates: { lat: 0, lng: 0 }
       },
-      description,
-      circumstances: result.circumstances || 'Informations extraites automatiquement depuis une affiche « Alerte Enlèvement ». À vérifier.',
-      clothingDescription: result.clothing || undefined,
-      personalItems: result.accessories || undefined,
-      medicalInfo: undefined,
-      behavioralInfo: undefined,
+      description: detailedDescription,
+      circumstances: specificCircumstances,
+      clothingDescription: clothingDetails,
+      personalItems: personalItemsDetails,
+      medicalInfo: medicalInfoDetails,
+      behavioralInfo: behavioralInfoDetails,
       reporterContact: {
         name: 'Anonyme',
         relationship: 'Témoin',
