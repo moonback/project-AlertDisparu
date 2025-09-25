@@ -22,10 +22,12 @@ import {
   Car,
   Users,
   X,
-  Image
+  Image,
+  BarChart3
 } from 'lucide-react';
 import { InvestigationObservation, ConfidenceLevel } from '../../types';
 import { AddObservationForm } from './AddObservationForm';
+import { AnalyticsDashboard } from '../Analytics';
 
 interface InvestigationObservationsProps {
   className?: string;
@@ -40,6 +42,7 @@ export const InvestigationObservations: React.FC<InvestigationObservationsProps>
   const [showAddForm, setShowAddForm] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [observationToDelete, setObservationToDelete] = useState<InvestigationObservation | null>(null);
+  const [activeTab, setActiveTab] = useState<'observations' | 'analytics'>('observations');
 
   const report = id ? getReportById(id) : null;
 
@@ -137,57 +140,90 @@ export const InvestigationObservations: React.FC<InvestigationObservationsProps>
             Lieux et heures où {report.firstName} {report.lastName} a été aperçu(e)
           </p>
         </div>
-        <Button 
-          onClick={() => setShowAddForm(true)}
-          leftIcon={<Plus className="h-4 w-4" />}
-        >
-          Ajouter une observation
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button 
+            onClick={() => setShowAddForm(true)}
+            leftIcon={<Plus className="h-4 w-4" />}
+          >
+            Ajouter une observation
+          </Button>
+        </div>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card variant="elevated">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900">{observations.length}</div>
-            <div className="text-sm text-gray-600">Total</div>
-          </CardContent>
-        </Card>
-        <Card variant="elevated">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {observations.filter(o => o.isVerified).length}
-            </div>
-            <div className="text-sm text-gray-600">Vérifiées</div>
-          </CardContent>
-        </Card>
-        <Card variant="elevated">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {observations.filter(o => o.confidenceLevel === 'high').length}
-            </div>
-            <div className="text-sm text-gray-600">Haute confiance</div>
-          </CardContent>
-        </Card>
-        <Card variant="elevated">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {new Set(observations.map(o => o.location.city)).size}
-            </div>
-            <div className="text-sm text-gray-600">Villes</div>
-          </CardContent>
-        </Card>
+      {/* Navigation par onglets */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('observations')}
+            className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'observations'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Eye className="h-4 w-4" />
+            <span>Observations</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'analytics'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span>Analytics</span>
+          </button>
+        </nav>
       </div>
 
-      {/* Messages d'erreur */}
-      {error && (
-        <Alert variant="error" title="Erreur">
-          {error}
-        </Alert>
-      )}
+      {/* Contenu des onglets */}
+      {activeTab === 'observations' && (
+        <>
+          {/* Statistiques */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card variant="elevated">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-gray-900">{observations.length}</div>
+                <div className="text-sm text-gray-600">Total</div>
+              </CardContent>
+            </Card>
+            <Card variant="elevated">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {observations.filter(o => o.isVerified).length}
+                </div>
+                <div className="text-sm text-gray-600">Vérifiées</div>
+              </CardContent>
+            </Card>
+            <Card variant="elevated">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {observations.filter(o => o.confidenceLevel === 'high').length}
+                </div>
+                <div className="text-sm text-gray-600">Haute confiance</div>
+              </CardContent>
+            </Card>
+            <Card variant="elevated">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {new Set(observations.map(o => o.location.city)).size}
+                </div>
+                <div className="text-sm text-gray-600">Villes</div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Liste des observations */}
-      {observations.length === 0 ? (
+          {/* Messages d'erreur */}
+          {error && (
+            <Alert variant="error" title="Erreur">
+              {error}
+            </Alert>
+          )}
+
+          {/* Liste des observations */}
+          {observations.length === 0 ? (
         <Card variant="elevated">
           <CardContent className="p-8 text-center">
             <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -374,6 +410,12 @@ export const InvestigationObservations: React.FC<InvestigationObservationsProps>
             </Card>
           ))}
         </div>
+      )}
+        </>
+      )}
+
+      {activeTab === 'analytics' && (
+        <AnalyticsDashboard />
       )}
 
       {/* Formulaire d'ajout d'observation */}
