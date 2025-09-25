@@ -2,10 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
-import { Search, MapPin, User, LogOut } from 'lucide-react';
+import { UserMenu } from './UserMenu';
+import { Search, MapPin } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const location = useLocation();
   
   const isActiveRoute = (path: string) => {
@@ -60,28 +61,7 @@ export const Header: React.FC = () => {
           
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <Link
-                  to="/profil"
-                  className={`flex items-center space-x-2 text-sm transition-colors ${
-                    isActiveRoute('/profil')
-                      ? 'text-red-600'
-                      : 'text-gray-700 hover:text-red-600'
-                  }`}
-                >
-                  <User className="h-4 w-4" />
-                  <span>{user?.firstName} {user?.lastName}</span>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={logout}
-                  className="flex items-center space-x-1"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Déconnexion</span>
-                </Button>
-              </div>
+              <UserMenu />
             ) : (
               <div className="flex items-center space-x-3">
                 <Link to="/connexion">
