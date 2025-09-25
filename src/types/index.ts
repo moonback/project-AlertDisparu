@@ -109,3 +109,6 @@ export interface InvestigationObservation {
   photos?: string[]; // URLs des photos jointes
   photoDescriptions?: string[]; // Descriptions des photos
 }
+
+// Re-export des types d'analytics
+export * from './analytics';
