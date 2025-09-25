@@ -80,3 +80,32 @@ export interface GeolocationAlert {
   distance: number;
   location: Location;
 }
+
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+
+export interface InvestigationObservation {
+  id: string;
+  missingPersonId: string;
+  observerName: string;
+  observerPhone?: string;
+  observerEmail?: string;
+  observationDate: string;
+  observationTime?: string;
+  location: Location;
+  description: string;
+  confidenceLevel: ConfidenceLevel;
+  clothingDescription?: string;
+  behaviorDescription?: string;
+  companions?: string;
+  vehicleInfo?: string;
+  witnessContactConsent: boolean;
+  isVerified: boolean;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  distanceFromDisappearance?: number; // Distance en km depuis le lieu de disparition
+  photos?: string[]; // URLs des photos jointes
+  photoDescriptions?: string[]; // Descriptions des photos
+}
