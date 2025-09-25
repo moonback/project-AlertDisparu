@@ -2,10 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
-import { Search, MapPin, User, LogOut } from 'lucide-react';
+import { UserMenu } from './UserMenu';
+import { Search, MapPin } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const location = useLocation();
   
   const isActiveRoute = (path: string) => {
@@ -25,9 +26,9 @@ export const Header: React.FC = () => {
             {isAuthenticated && (
               <nav className="hidden md:flex space-x-6">
                 <Link
-                  to="/reports"
+                  to="/rapports"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActiveRoute('/reports')
+                    isActiveRoute('/rapports')
                       ? 'text-red-600 bg-red-50'
                       : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
                   }`}
@@ -60,21 +61,7 @@ export const Header: React.FC = () => {
           
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 text-sm text-gray-700">
-                  <User className="h-4 w-4" />
-                  <span>{user?.firstName} {user?.lastName}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={logout}
-                  className="flex items-center space-x-1"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Déconnexion</span>
-                </Button>
-              </div>
+              <UserMenu />
             ) : (
               <div className="flex items-center space-x-3">
                 <Link to="/connexion">
