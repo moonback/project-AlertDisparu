@@ -94,7 +94,7 @@ export const HomePage: React.FC = () => {
                   <Filter className="h-4 w-4 text-gray-500" />
                   <select 
                     value={selectedTimeframe} 
-                    onChange={(e) => setSelectedTimeframe(e.target.value as any)}
+                    onChange={(e) => setSelectedTimeframe(e.target.value as '7d' | '30d' | '90d' | 'all')}
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm"
                   >
                     <option value="7d">7 derniers jours</option>
@@ -365,69 +365,7 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Outils d'investigation */}
-      <div className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Outils d'investigation</h2>
-            <p className="text-gray-600">Fonctionnalités avancées pour optimiser vos recherches</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="p-3 bg-blue-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <MapPin className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Géolocalisation</h3>
-                <p className="text-sm text-gray-600 mb-4">Cartes interactives et alertes de proximité</p>
-                <Link to="/carte">
-                  <Button variant="outline" size="sm">Accéder</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="p-3 bg-green-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Search className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Recherche avancée</h3>
-                <p className="text-sm text-gray-600 mb-4">Filtres multiples et critères précis</p>
-                <Link to="/rapports">
-                  <Button variant="outline" size="sm">Rechercher</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="p-3 bg-purple-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <FileText className="h-8 w-8 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Rapports détaillés</h3>
-                <p className="text-sm text-gray-600 mb-4">Analyses et statistiques complètes</p>
-                <Link to="/rapports">
-                  <Button variant="outline" size="sm">Consulter</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="p-3 bg-red-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <AlertTriangle className="h-8 w-8 text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Alertes temps réel</h3>
-                <p className="text-sm text-gray-600 mb-4">Notifications instantanées</p>
-                <Link to="/alertes">
-                  <Button variant="outline" size="sm">Configurer</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Message pour les utilisateurs non connectés */}
       {!isAuthenticated && (
