@@ -10,7 +10,6 @@ import { ProfilePicture } from '../components/Profile/ProfilePicture';
 import { RecentActivity } from '../components/Profile/RecentActivity';
 import { 
   User, 
-  Mail, 
   Shield, 
   Calendar, 
   Edit3, 
@@ -314,7 +313,7 @@ export const ProfilePage: React.FC = () => {
                   {isEditing ? (
                     <Select
                       value={formData.role}
-                      onChange={(value) => handleInputChange('role', value)}
+                      onChange={(e) => handleInputChange('role', e.target.value)}
                       options={[
                         { value: 'volunteer', label: 'Bénévole' },
                         { value: 'family', label: 'Famille' },

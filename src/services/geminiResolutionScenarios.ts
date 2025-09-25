@@ -55,7 +55,7 @@ export async function generateResolutionScenarios(
     const startTime = performance.now();
 
     // Initialiser le modèle Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     // Construire le prompt avec toutes les informations disponibles
     const prompt = buildResolutionPrompt(report, observations);

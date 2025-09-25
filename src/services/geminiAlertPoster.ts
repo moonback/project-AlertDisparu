@@ -87,7 +87,7 @@ export async function analyzeAlertPosterWithGemini(imageFile: File): Promise<Ale
     } as const;
 
     // Stratégie de retry avec backoff exponentiel et fallback de modèle
-    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    const modelsToTry = ['gemini-2.5-flash'];
     const maxAttempts = 3;
 
     for (const modelName of modelsToTry) {

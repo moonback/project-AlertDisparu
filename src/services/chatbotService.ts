@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../lib/supabase';
 import { MissingPerson, InvestigationObservation, SavedResolutionScenario, User } from '../types';
-import { AnalyticsService } from './analytics';
+import { ChatbotPromptSystem } from './chatbotPrompts';
 
 // Configuration de l'API Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
@@ -11,7 +11,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  data?: any; // Données supplémentaires pour les réponses avec données
+  conversationId?: string; // ID de la conversation
+  data?: Record<string, unknown>; // Données supplémentaires pour les réponses avec données
 }
 
 export interface ChatConversation {
@@ -26,6 +27,97 @@ export interface ChatConversation {
   messageCount: number;
 }
 
+// Interfaces pour les données brutes de la base de données
+interface RawMissingPerson {
+  id: string;
+  first_name: string;
+  last_name: string;
+  age: number;
+  gender: string;
+  photo?: string;
+  date_disappeared: string;
+  time_disappeared?: string;
+  location_address?: string;
+  location_city?: string;
+  location_state?: string;
+  location_country?: string;
+  location_lat?: number;
+  location_lng?: number;
+  description?: string;
+  case_type: string;
+  priority: string;
+  status: string;
+  is_emergency: boolean;
+  circumstances?: string;
+  clothing_description?: string;
+  personal_items?: string;
+  medical_info?: string;
+  behavioral_info?: string;
+  last_contact_date?: string;
+  reporter_name?: string;
+  reporter_relationship?: string;
+  reporter_phone?: string;
+  reporter_email?: string;
+  consent_given?: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+interface RawInvestigationObservation {
+  id: string;
+  missing_person_id: string;
+  observer_name: string;
+  observer_phone?: string;
+  observer_email?: string;
+  observation_date: string;
+  observation_time?: string;
+  location_address?: string;
+  location_city?: string;
+  location_state?: string;
+  location_country?: string;
+  location_lat?: number;
+  location_lng?: number;
+  description?: string;
+  confidence_level: string;
+  is_verified: boolean;
+  clothing_description?: string;
+  behavior_description?: string;
+  additional_notes?: string;
+  photos?: string[];
+  witness_contact_consent?: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+interface RawResolutionScenario {
+  id: string;
+  missing_person_id: string;
+  scenario1_title?: string;
+  scenario1_description?: string;
+  scenario1_probability?: string;
+  scenario1_actions?: string[];
+  scenario1_timeline?: string;
+  scenario1_key_factors?: string[];
+  scenario1_resources?: string[];
+  scenario2_title?: string;
+  scenario2_description?: string;
+  scenario2_probability?: string;
+  scenario2_actions?: string[];
+  scenario2_timeline?: string;
+  scenario2_key_factors?: string[];
+  scenario2_resources?: string[];
+  summary?: string;
+  recommendations?: string[];
+  generation_date?: string;
+  ai_model_used?: string;
+  generation_version?: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
 export interface ChatContext {
   user: User | null;
   currentReport?: MissingPerson;
@@ -34,7 +126,7 @@ export interface ChatContext {
     reports: MissingPerson[];
     observations: InvestigationObservation[];
     scenarios: SavedResolutionScenario[];
-    analytics?: any;
+    analytics?: unknown;
   };
 }
 
@@ -42,7 +134,7 @@ export interface ChatContext {
  * Service principal du chatbot avec accès complet à la base de données
  */
 export class ChatbotService {
-  private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  private model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   private context: ChatContext;
 
   constructor(user: User | null = null) {
@@ -203,9 +295,9 @@ export class ChatbotService {
       }
 
       this.context.availableData = {
-        reports: reports || [],
-        observations: observations || [],
-        scenarios: scenarios || []
+        reports: this.transformReportsData(reports || []),
+        observations: this.transformObservationsData(observations || []),
+        scenarios: this.transformScenariosData(scenarios || [])
       };
 
       console.log('📊 Données chargées pour le chatbot:', {
@@ -216,6 +308,11 @@ export class ChatbotService {
 
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
+      this.context.availableData = {
+        reports: [],
+        observations: [],
+        scenarios: []
+      };
     }
   }
 
@@ -242,16 +339,16 @@ export class ChatbotService {
         throw error;
       }
 
-      return (data || []).map((conv: any) => ({
-        id: conv.conversation_id,
-        title: conv.title,
-        createdAt: new Date(conv.created_at),
-        updatedAt: new Date(conv.updated_at),
-        lastMessageAt: new Date(conv.last_message_at),
-        isActive: conv.is_active,
-        lastMessageContent: conv.last_message_content,
-        lastMessageRole: conv.last_message_role,
-        messageCount: parseInt(conv.message_count)
+      return (data || []).map((conv: Record<string, unknown>) => ({
+        id: conv.conversation_id as string,
+        title: conv.title as string,
+        createdAt: new Date(conv.created_at as string),
+        updatedAt: new Date(conv.updated_at as string),
+        lastMessageAt: new Date(conv.last_message_at as string),
+        isActive: conv.is_active as boolean,
+        lastMessageContent: conv.last_message_content as string,
+        lastMessageRole: conv.last_message_role as string,
+        messageCount: parseInt(conv.message_count as string)
       }));
     } catch (error) {
       console.error('Erreur lors de la récupération des conversations:', error);
@@ -279,12 +376,12 @@ export class ChatbotService {
         throw error;
       }
 
-      return (data || []).map((msg: any) => ({
-        id: msg.message_id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-        data: msg.metadata
+      return (data || []).map((msg: Record<string, unknown>) => ({
+        id: msg.message_id as string,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content as string,
+        timestamp: new Date(msg.created_at as string),
+        data: msg.metadata as Record<string, unknown>
       }));
     } catch (error) {
       console.error('Erreur lors de la récupération des messages:', error);
@@ -467,7 +564,11 @@ export class ChatbotService {
         .map(msg => `${msg.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${msg.content}`)
         .join('\n');
 
-      const fullPrompt = `
+      // Détecter le type de demande pour un prompt spécialisé
+      const requestType = this.detectRequestType(message);
+      const fullPrompt = requestType ? 
+        ChatbotPromptSystem.buildSpecializedPrompt(requestType, this.context, message) :
+        `
 ${contextPrompt}
 
 HISTORIQUE DE CONVERSATION:
@@ -493,7 +594,8 @@ RÉPONSE:`;
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: assistantContent,
-        timestamp: new Date()
+        timestamp: new Date(),
+        conversationId: this.context.currentConversationId
       };
 
       // Sauvegarder la réponse de l'assistant
@@ -524,109 +626,22 @@ RÉPONSE:`;
   private buildContextPrompt(): string {
     const { user, availableData } = this.context;
     
-    let contextPrompt = `
-Tu es un assistant IA spécialisé dans l'aide aux investigations de personnes disparues. Tu as accès à une base de données complète contenant :
-
-UTILISATEUR ACTUEL:
-- ${user ? `${user.firstName} ${user.lastName} (${user.role})` : 'Non connecté'}
-
-DONNÉES DISPONIBLES:
-`;
-
-    // Informations sur les signalements
-    if (availableData.reports.length > 0) {
-      contextPrompt += `
-SIGNALEMENTS ACTIFS (${availableData.reports.length}):
-`;
-      availableData.reports.slice(0, 10).forEach((report, index) => {
-        const daysSince = Math.floor(
-          (new Date().getTime() - new Date(report.date_disappeared).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        contextPrompt += `
-${index + 1}. ${report.first_name} ${report.last_name} (${report.age} ans, ${report.gender === 'male' ? 'Homme' : 'Femme'})
-   - Disparu depuis: ${daysSince} jour${daysSince !== 1 ? 's' : ''} (${new Date(report.date_disappeared).toLocaleDateString('fr-FR')})
-   - Lieu: ${report.location_city}, ${report.location_state}
-   - Type: ${report.case_type}
-   - Priorité: ${report.priority}
-   - Urgence: ${report.is_emergency ? 'OUI' : 'NON'}
-   - Statut: ${report.status}
-   - Description: ${report.description.substring(0, 200)}...
-`;
-      });
-    } else {
-      contextPrompt += `
-SIGNALEMENTS: Aucun signalement actif
-`;
+    if (!user) {
+      return 'Erreur: Utilisateur non connecté';
     }
 
-    // Informations sur les observations
-    if (availableData.observations.length > 0) {
-      contextPrompt += `
-OBSERVATIONS RÉCENTES (${availableData.observations.length}):
-`;
-      availableData.observations.slice(0, 15).forEach((obs, index) => {
-        contextPrompt += `
-${index + 1}. ${obs.observer_name} - ${new Date(obs.observation_date).toLocaleDateString('fr-FR')}
-   - Lieu: ${obs.location_city}, ${obs.location_state}
-   - Confiance: ${obs.confidence_level}
-   - Vérifiée: ${obs.is_verified ? 'OUI' : 'NON'}
-   - Description: ${obs.description.substring(0, 150)}...
-`;
-      });
-    } else {
-      contextPrompt += `
-OBSERVATIONS: Aucune observation disponible
-`;
-    }
-
-    // Informations sur les scénarios
-    if (availableData.scenarios.length > 0) {
-      contextPrompt += `
-SCÉNARIOS DE RÉSOLUTION (${availableData.scenarios.length}):
-`;
-      availableData.scenarios.slice(0, 5).forEach((scenario, index) => {
-        contextPrompt += `
-${index + 1}. Généré le ${new Date(scenario.generation_date).toLocaleDateString('fr-FR')}
-   - Scénario 1: ${scenario.scenario1_title} (probabilité: ${scenario.scenario1_probability})
-   - Scénario 2: ${scenario.scenario2_title} (probabilité: ${scenario.scenario2_probability})
-   - Résumé: ${scenario.summary.substring(0, 200)}...
-`;
-      });
-    } else {
-      contextPrompt += `
-SCÉNARIOS: Aucun scénario de résolution disponible
-`;
-    }
-
-    // Statistiques générales
-    const activeReports = availableData.reports.filter(r => r.status === 'active').length;
-    const verifiedObservations = availableData.observations.filter(o => o.is_verified).length;
-    const highConfidenceObservations = availableData.observations.filter(o => o.confidence_level === 'high').length;
-
-    contextPrompt += `
-STATISTIQUES GÉNÉRALES:
-- Signalements actifs: ${activeReports}
-- Observations vérifiées: ${verifiedObservations}
-- Observations haute confiance: ${highConfidenceObservations}
-- Total observations: ${availableData.observations.length}
-- Scénarios générés: ${availableData.scenarios.length}
-
-CAPACITÉS DISPONIBLES:
-- Analyser les tendances des observations
-- Suggérer des actions d'investigation
-- Évaluer la crédibilité des témoignages
-- Proposer des scénarios de résolution
-- Fournir des statistiques détaillées
-- Aider à la coordination des recherches
-`;
-
-    return contextPrompt;
+    // Utiliser le nouveau système de prompts amélioré
+    return ChatbotPromptSystem.buildSystemPrompt(user, availableData);
   }
 
   /**
    * Recherche dans les données disponibles
    */
-  async searchData(query: string): Promise<any> {
+  async searchData(query: string): Promise<{
+    reports: MissingPerson[];
+    observations: InvestigationObservation[];
+    scenarios: SavedResolutionScenario[];
+  }> {
     const results = {
       reports: [] as MissingPerson[],
       observations: [] as InvestigationObservation[],
@@ -637,26 +652,26 @@ CAPACITÉS DISPONIBLES:
 
     // Recherche dans les signalements
     results.reports = this.context.availableData.reports.filter(report =>
-      report.first_name.toLowerCase().includes(searchTerm) ||
-      report.last_name.toLowerCase().includes(searchTerm) ||
-      report.location_city.toLowerCase().includes(searchTerm) ||
+      report.firstName.toLowerCase().includes(searchTerm) ||
+      report.lastName.toLowerCase().includes(searchTerm) ||
+      report.locationDisappeared.city.toLowerCase().includes(searchTerm) ||
       report.description.toLowerCase().includes(searchTerm) ||
-      report.case_type.toLowerCase().includes(searchTerm)
+      report.caseType.toLowerCase().includes(searchTerm)
     );
 
     // Recherche dans les observations
     results.observations = this.context.availableData.observations.filter(obs =>
-      obs.observer_name.toLowerCase().includes(searchTerm) ||
+      obs.observerName.toLowerCase().includes(searchTerm) ||
       obs.description.toLowerCase().includes(searchTerm) ||
-      obs.location_city.toLowerCase().includes(searchTerm) ||
-      obs.clothing_description?.toLowerCase().includes(searchTerm) ||
-      obs.behavior_description?.toLowerCase().includes(searchTerm)
+      obs.location.city.toLowerCase().includes(searchTerm) ||
+      obs.clothingDescription?.toLowerCase().includes(searchTerm) ||
+      obs.behaviorDescription?.toLowerCase().includes(searchTerm)
     );
 
     // Recherche dans les scénarios
     results.scenarios = this.context.availableData.scenarios.filter(scenario =>
-      scenario.scenario1_title.toLowerCase().includes(searchTerm) ||
-      scenario.scenario2_title.toLowerCase().includes(searchTerm) ||
+      scenario.scenario1.title.toLowerCase().includes(searchTerm) ||
+      scenario.scenario2.title.toLowerCase().includes(searchTerm) ||
       scenario.summary.toLowerCase().includes(searchTerm) ||
       scenario.recommendations.some(rec => rec.toLowerCase().includes(searchTerm))
     );
@@ -683,14 +698,14 @@ CAPACITÉS DISPONIBLES:
     }
 
     // Suggestions basées sur les observations non vérifiées
-    const unverifiedObservations = observations.filter(o => !o.is_verified);
+    const unverifiedObservations = observations.filter(o => !o.isVerified);
     if (unverifiedObservations.length > 0) {
       suggestions.push(`${unverifiedObservations.length} observation(s) en attente de vérification`);
     }
 
     // Suggestions basées sur les patterns temporels
     const recentObservations = observations.filter(obs => {
-      const obsDate = new Date(obs.observation_date);
+      const obsDate = new Date(obs.observationDate);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       return obsDate >= weekAgo;
@@ -709,6 +724,169 @@ CAPACITÉS DISPONIBLES:
   async loadConversation(conversationId: string): Promise<ChatMessage[]> {
     await this.setActiveConversation(conversationId);
     return await this.getConversationMessages(conversationId);
+  }
+
+  /**
+   * Détecte le type de demande pour utiliser un prompt spécialisé
+   */
+  private detectRequestType(message: string): 'analysis' | 'recommendations' | 'scenarios' | 'statistics' | 'investigation' | null {
+    const msg = message.toLowerCase();
+    
+    // Mots-clés pour l'analyse
+    if (msg.includes('analyser') || msg.includes('analyse') || msg.includes('pattern') || 
+        msg.includes('tendance') || msg.includes('corrélation') || msg.includes('évaluer')) {
+      return 'analysis';
+    }
+    
+    // Mots-clés pour les recommandations
+    if (msg.includes('recommand') || msg.includes('suggérer') || msg.includes('conseil') || 
+        msg.includes('que faire') || msg.includes('action') || msg.includes('stratégie')) {
+      return 'recommendations';
+    }
+    
+    // Mots-clés pour les scénarios
+    if (msg.includes('scénario') || msg.includes('probabilité') || msg.includes('possible') || 
+        msg.includes('hypothèse') || msg.includes('si') || msg.includes('cas')) {
+      return 'scenarios';
+    }
+    
+    // Mots-clés pour les statistiques
+    if (msg.includes('statistique') || msg.includes('nombre') || msg.includes('combien') || 
+        msg.includes('pourcentage') || msg.includes('moyenne') || msg.includes('total')) {
+      return 'statistics';
+    }
+    
+    // Mots-clés pour l'investigation
+    if (msg.includes('enquête') || msg.includes('investigation') || msg.includes('recherche') || 
+        msg.includes('piste') || msg.includes('coordonner') || msg.includes('équipe')) {
+      return 'investigation';
+    }
+    
+    return null;
+  }
+
+  /**
+   * Transforme les données des signalements de snake_case vers camelCase
+   */
+  private transformReportsData(data: RawMissingPerson[]): MissingPerson[] {
+    console.log('🔄 Transformation des signalements:', data.slice(0, 1)); // Debug
+    return data.map(item => ({
+      id: item.id,
+      firstName: item.first_name,
+      lastName: item.last_name,
+      age: item.age,
+      gender: item.gender as 'male' | 'female' | 'other',
+      photo: item.photo,
+      dateDisappeared: item.date_disappeared,
+      timeDisappeared: item.time_disappeared,
+      locationDisappeared: {
+        address: item.location_address || '',
+        city: item.location_city || '',
+        state: item.location_state || '',
+        country: item.location_country || '',
+        coordinates: {
+          lat: item.location_lat || 0,
+          lng: item.location_lng || 0
+        }
+      },
+      caseType: item.case_type as 'disappearance' | 'runaway' | 'abduction' | 'missing_adult' | 'missing_child',
+      priority: item.priority as 'low' | 'medium' | 'high' | 'critical',
+      status: item.status as 'active' | 'found' | 'closed',
+      isEmergency: item.is_emergency,
+      description: item.description || '',
+      physicalDescription: item.circumstances,
+      clothingDescription: item.clothing_description,
+      lastSeenLocation: item.last_contact_date,
+      contactInfo: {
+        name: item.reporter_name || '',
+        phone: item.reporter_phone || '',
+        email: item.reporter_email || '',
+        relationship: item.reporter_relationship || ''
+      },
+      reporterContact: {
+        name: item.reporter_name || '',
+        phone: item.reporter_phone || '',
+        email: item.reporter_email || '',
+        relationship: item.reporter_relationship || ''
+      },
+      consentGiven: item.consent_given || false,
+      additionalInfo: item.personal_items,
+      createdBy: item.created_by,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    }));
+  }
+
+  /**
+   * Transforme les données des observations de snake_case vers camelCase
+   */
+  private transformObservationsData(data: RawInvestigationObservation[]): InvestigationObservation[] {
+    return data.map(item => ({
+      id: item.id,
+      missingPersonId: item.missing_person_id,
+      observerName: item.observer_name,
+      observerPhone: item.observer_phone,
+      observerEmail: item.observer_email,
+      observationDate: item.observation_date,
+      observationTime: item.observation_time,
+      location: {
+        address: item.location_address || '',
+        city: item.location_city || '',
+        state: item.location_state || '',
+        country: item.location_country || '',
+        coordinates: {
+          lat: item.location_lat || 0,
+          lng: item.location_lng || 0
+        }
+      },
+      description: item.description || '',
+      confidenceLevel: item.confidence_level as 'low' | 'medium' | 'high',
+      isVerified: item.is_verified,
+      clothingDescription: item.clothing_description,
+      behaviorDescription: item.behavior_description,
+      additionalNotes: item.additional_notes,
+      photos: item.photos,
+      witnessContactConsent: item.witness_contact_consent || false,
+      createdBy: item.created_by,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    }));
+  }
+
+  /**
+   * Transforme les données des scénarios de snake_case vers camelCase
+   */
+  private transformScenariosData(data: RawResolutionScenario[]): SavedResolutionScenario[] {
+    return data.map(item => ({
+      id: item.id,
+      missingPersonId: item.missing_person_id,
+      scenario1: {
+        title: item.scenario1_title || '',
+        description: item.scenario1_description || '',
+        probability: (item.scenario1_probability as 'low' | 'medium' | 'high') || 'medium',
+        actions: item.scenario1_actions || [],
+        timeline: item.scenario1_timeline || '',
+        keyFactors: item.scenario1_key_factors || [],
+        resources: item.scenario1_resources || []
+      },
+      scenario2: {
+        title: item.scenario2_title || '',
+        description: item.scenario2_description || '',
+        probability: (item.scenario2_probability as 'low' | 'medium' | 'high') || 'medium',
+        actions: item.scenario2_actions || [],
+        timeline: item.scenario2_timeline || '',
+        keyFactors: item.scenario2_key_factors || [],
+        resources: item.scenario2_resources || []
+      },
+      summary: item.summary || '',
+      recommendations: item.recommendations || [],
+      generationDate: item.generation_date || new Date().toISOString(),
+      aiModelUsed: item.ai_model_used || 'gemini-pro',
+      generationVersion: item.generation_version || '1.0',
+      createdBy: item.created_by,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    }));
   }
 
   /**

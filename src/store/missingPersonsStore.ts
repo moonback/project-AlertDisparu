@@ -196,7 +196,7 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
       }
 
       // Préparer les données pour la mise à jour
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString()
       };
 
@@ -363,19 +363,19 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
       );
     }
     
-    if (filters.gender && filters.gender !== 'all') {
+    if (filters.gender) {
       filtered = filtered.filter(report => report.gender === filters.gender);
     }
     
-    if (filters.caseType && filters.caseType !== 'all') {
+    if (filters.caseType) {
       filtered = filtered.filter(report => report.caseType === filters.caseType);
     }
-    
-    if (filters.priority && filters.priority !== 'all') {
+
+    if (filters.priority) {
       filtered = filtered.filter(report => report.priority === filters.priority);
     }
-    
-    if (filters.status && filters.status !== 'all') {
+
+    if (filters.status) {
       filtered = filtered.filter(report => report.status === filters.status);
     }
     
@@ -556,7 +556,7 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         return { success: false, error: 'Utilisateur non authentifié' };
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString()
       };
 
@@ -720,7 +720,7 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         summary: scenarioData.summary,
         recommendations: scenarioData.recommendations,
         generation_date: new Date().toISOString(),
-        ai_model_used: 'gemini-1.5-flash',
+        ai_model_used: 'gemini-2.5-flash',
         generation_version: '1.0',
         created_by: authState.user.id
       };
@@ -755,7 +755,7 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         return { success: false, error: 'Utilisateur non authentifié' };
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString()
       };
 

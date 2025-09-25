@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2, HelpCircle, Database, MessageSquare, Menu } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Minimize2, Maximize2, HelpCircle, Database, MessageSquare } from 'lucide-react';
 import { ChatbotService, ChatMessage } from '../../services/chatbotService';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/cn';
@@ -7,6 +7,7 @@ import { QuickSuggestions } from './QuickSuggestions';
 import { ChatMessage as ChatMessageComponent } from './ChatMessage';
 import { DataInsights } from './DataInsights';
 import { ConversationList } from './ConversationList';
+import { SmartSuggestions } from './SmartSuggestions';
 
 interface FloatingChatbotProps {
   className?: string;
@@ -21,6 +22,7 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showDataInsights, setShowDataInsights] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
+  const [showSmartSuggestions, setShowSmartSuggestions] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [isFirstMessage, setIsFirstMessage] = useState(true);
   const [chatbotService] = useState(() => new ChatbotService());
@@ -62,6 +64,9 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || !user) return;
+    
+    // Masquer les suggestions intelligentes après le premier message
+    setShowSmartSuggestions(false);
 
     const userMessage = inputValue.trim();
     setInputValue('');
@@ -74,23 +79,27 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       const response = await chatbotService.processMessage(userMessage);
       setMessages(prev => [...prev, response]);
       
+      // Récupérer l'ID de conversation depuis le service
+      const currentConvId = response.conversationId || activeConversationId;
+      if (currentConvId && !activeConversationId) {
+        setActiveConversationId(currentConvId);
+      }
+      
       // Si c'est le premier message, générer un titre pour la conversation
-      if (isFirstMessage) {
+      if (isFirstMessage && currentConvId) {
         setIsFirstMessage(false);
         // Attendre un peu avant de générer le titre pour que le message soit sauvegardé
         setTimeout(async () => {
           try {
-            await chatbotService.updateActiveConversationTitle(userMessage);
+            // Créer un titre simple sans API pour éviter les erreurs de quota
+            const simpleTitle = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
+            await chatbotService.updateConversationTitle(currentConvId, simpleTitle);
           } catch (error) {
             console.error('Erreur lors de la génération du titre:', error);
           }
         }, 1000);
       }
       
-      // Mettre à jour l'ID de conversation active
-      if (!activeConversationId) {
-        setActiveConversationId(chatbotService.context.currentConversationId);
-      }
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
       const errorMessage: ChatMessage = {
@@ -127,6 +136,7 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       setActiveConversationId(undefined);
       setIsFirstMessage(true);
       setShowConversations(false);
+      setShowSmartSuggestions(true);
       setShowSuggestions(true);
       setShowDataInsights(false);
       
@@ -173,25 +183,36 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
   const clearChat = () => {
     setMessages([]);
     setShowSuggestions(true);
-    chatbotService.clearHistory();
+    setShowSmartSuggestions(true);
+    setActiveConversationId(undefined);
   };
 
   const toggleSuggestions = () => {
     setShowSuggestions(!showSuggestions);
     setShowDataInsights(false);
     setShowConversations(false);
+    setShowSmartSuggestions(false);
   };
 
   const toggleDataInsights = () => {
     setShowDataInsights(!showDataInsights);
     setShowSuggestions(false);
     setShowConversations(false);
+    setShowSmartSuggestions(false);
   };
 
   const toggleConversations = () => {
     setShowConversations(!showConversations);
     setShowSuggestions(false);
     setShowDataInsights(false);
+    setShowSmartSuggestions(false);
+  };
+
+  const toggleSmartSuggestions = () => {
+    setShowSmartSuggestions(!showSmartSuggestions);
+    setShowSuggestions(false);
+    setShowDataInsights(false);
+    setShowConversations(false);
   };
 
   // Message d'accueil
@@ -202,20 +223,12 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
         role: 'assistant',
         content: `Bonjour${user ? ` ${user.firstName}` : ''} ! 👋
 
-Je suis votre assistant IA spécialisé dans les investigations de personnes disparues. Je peux vous aider avec :
-
-🔍 **Analyse des signalements** - Examiner les cas actifs et leurs détails
-📊 **Statistiques et tendances** - Analyser les patterns d'observations  
-🎯 **Suggestions d'actions** - Proposer des stratégies d'investigation
-📈 **Évaluation de crédibilité** - Analyser la fiabilité des témoignages
-🤖 **Génération de scénarios** - Créer des hypothèses de résolution
-
 Que puis-je faire pour vous aider aujourd'hui ?`,
         timestamp: new Date()
       };
       setMessages([welcomeMessage]);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, messages.length]);
 
   if (!ChatbotService.isConfigured()) {
     return null; // Ne pas afficher le chatbot si Gemini n'est pas configuré
@@ -287,7 +300,7 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
               )}
               {/* Debug info */}
               <span className="text-blue-200 text-xs">
-                {chatbotService.context.user ? '✅' : '❌'}
+                {user ? '✅' : '❌'}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -378,6 +391,19 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                         />
                       ))}
                       
+                      {/* Suggestions intelligentes (affichées au début) */}
+                      {showSmartSuggestions && messages.length <= 1 && user && (
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-3">
+                          <SmartSuggestions 
+                            onSuggestionClick={(suggestion) => {
+                              setInputValue(suggestion);
+                              setShowSmartSuggestions(false);
+                            }}
+                            userRole={user.role}
+                          />
+                        </div>
+                      )}
+                      
                       {isLoading && (
                         <div className="flex justify-start">
                           <div className="bg-gray-100 text-gray-800 rounded-lg p-3 max-w-[80%] border border-gray-200">
@@ -405,6 +431,12 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                             className="flex-1 text-xs text-purple-600 hover:text-purple-800 transition-colors py-1"
                           >
                             💬 Conversations
+                          </button>
+                          <button
+                            onClick={toggleSmartSuggestions}
+                            className="flex-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors py-1"
+                          >
+                            🧠 IA
                           </button>
                           <button
                             onClick={toggleSuggestions}
