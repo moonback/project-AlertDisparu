@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MissingPerson } from '../../types';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { MapPin, Calendar, User, Share, Eye, Clock } from 'lucide-react';
+import { MapPin, Calendar, User, Share, Eye, Clock, FileText } from 'lucide-react';
 import { CaseTypeBadge } from '../ui/CaseTypeBadge';
+import { useMissingPersonsStore } from '../../store/missingPersonsStore';
 
 interface ReportCardProps {
   report: MissingPerson;
@@ -13,6 +14,23 @@ interface ReportCardProps {
 }
 
 export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'default' }) => {
+  const { getResolutionScenariosByReportId } = useMissingPersonsStore();
+  const [scenariosCount, setScenariosCount] = useState<number>(0);
+
+  useEffect(() => {
+    const loadScenariosCount = async () => {
+      try {
+        const scenarios = await getResolutionScenariosByReportId(report.id);
+        setScenariosCount(scenarios.length);
+      } catch (error) {
+        console.error('Erreur lors du chargement des scénarios:', error);
+        setScenariosCount(0);
+      }
+    };
+
+    loadScenariosCount();
+  }, [report.id, getResolutionScenariosByReportId]);
+
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -125,14 +143,20 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                 </Badge>
               </div>
 
-              {/* Badge nombre de jours */}
-              {daysSinceMissing > 0 && (
-                <div className="absolute bottom-4 left-4">
+              {/* Badges nombre de jours et scénarios */}
+              <div className="absolute bottom-4 left-4 flex flex-col gap-2">
+                {daysSinceMissing > 0 && (
                   <div className="bg-black/80 text-white px-3 py-1 rounded-lg text-sm font-medium backdrop-blur-sm">
                     {daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}
                   </div>
-                </div>
-              )}
+                )}
+                {scenariosCount > 0 && (
+                  <div className="bg-blue-600/90 text-white px-3 py-1 rounded-lg text-sm font-medium backdrop-blur-sm flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    {scenariosCount} scénario{scenariosCount !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
 
               {/* Overlay dégradé */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
