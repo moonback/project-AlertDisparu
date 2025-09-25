@@ -23,10 +23,21 @@ export function useAlertPosterAnalysis(): UseAlertPosterAnalysisReturn {
       if (response.success && response.data) {
         setResult(response.data);
       } else {
-        setError(response.error || 'Erreur lors de l\'analyse de l\'affiche');
+        // Message d'erreur plus explicite et actionnable
+        const message = response.error || 'Erreur lors de l\'analyse de l\'affiche';
+        if (/503|overloaded|temporarily|indisponible|unavailable|quota|rate/i.test(message)) {
+          setError('Le service d\'analyse (Gemini) est temporairement surchargé. Réessayez dans quelques secondes.');
+        } else {
+          setError(message);
+        }
       }
     } catch (e) {
-      setError(`Erreur inattendue: ${e instanceof Error ? e.message : 'Erreur inconnue'}`);
+      const msg = e instanceof Error ? e.message : 'Erreur inconnue';
+      if (/503|overloaded|temporarily|indisponible|unavailable|quota|rate/i.test(msg)) {
+        setError('Le service d\'analyse (Gemini) est temporairement surchargé. Réessayez dans quelques secondes.');
+      } else {
+        setError(`Erreur inattendue: ${msg}`);
+      }
     } finally {
       setIsAnalyzing(false);
     }

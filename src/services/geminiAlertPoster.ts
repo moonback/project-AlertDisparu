@@ -77,8 +77,6 @@ export async function analyzeAlertPosterWithGemini(imageFile: File): Promise<Ale
     }
 
     const base64Image = await fileToBase64(imageFile);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     const prompt = buildAlertPosterPrompt();
 
     const imagePart = {
@@ -88,12 +86,44 @@ export async function analyzeAlertPosterWithGemini(imageFile: File): Promise<Ale
       }
     } as const;
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
+    // Stratégie de retry avec backoff exponentiel et fallback de modèle
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    const maxAttempts = 3;
 
-    const parsed = parseAlertPosterResponse(text);
-    return { success: true, data: parsed };
+    for (const modelName of modelsToTry) {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent([prompt, imagePart]);
+          const response = await result.response;
+          const text = response.text();
+          const parsed = parseAlertPosterResponse(text);
+          return { success: true, data: parsed };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          const isOverloaded = /503|overloaded|rate|quota|unavailable/i.test(message);
+          const isRetryable = isOverloaded || /ECONNRESET|ETIMEDOUT|network/i.test(message);
+
+          console.warn(`Tentative ${attempt}/${maxAttempts} échouée sur ${modelName}:`, message);
+
+          if (attempt < maxAttempts && isRetryable) {
+            const baseDelayMs = 800 * Math.pow(2, attempt - 1);
+            const jitter = Math.floor(Math.random() * 200);
+            const delay = baseDelayMs + jitter;
+            await new Promise((res) => setTimeout(res, delay));
+            continue; // réessayer
+          }
+
+          // Si non réessayable ou dernière tentative de ce modèle, passer au modèle suivant
+          if (attempt === maxAttempts) {
+            // Passer au modèle suivant si disponible
+            break;
+          }
+        }
+      }
+    }
+
+    return { success: false, error: 'Service Gemini temporairement indisponible (surcharge). Merci de réessayer dans quelques secondes.' };
   } catch (error) {
     console.error('Erreur analyse affiche Alerte Enlèvement:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Erreur inconnue' };
