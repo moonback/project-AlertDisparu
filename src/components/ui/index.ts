@@ -22,3 +22,4 @@ export { ComponentShowcase } from './ComponentShowcase';
 export { GeocodingStatus } from './GeocodingStatus';
 export { CaseTypeBadge } from './CaseTypeBadge';
 export { PhotoUpload } from './PhotoUpload';
+export { QuickImageUpload } from './QuickImageUpload';
