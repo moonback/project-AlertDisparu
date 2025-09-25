@@ -13,21 +13,49 @@ const genderOptions = [
   { value: 'other', label: 'Autre' }
 ];
 
+const caseTypeOptions = [
+  { value: 'all', label: 'Tous les types' },
+  { value: 'disappearance', label: 'Disparition générale' },
+  { value: 'runaway', label: 'Fugue' },
+  { value: 'abduction', label: 'Enlèvement' },
+  { value: 'missing_adult', label: 'Adulte disparu' },
+  { value: 'missing_child', label: 'Enfant disparu' }
+];
+
+const priorityOptions = [
+  { value: 'all', label: 'Toutes les priorités' },
+  { value: 'low', label: 'Faible' },
+  { value: 'medium', label: 'Moyenne' },
+  { value: 'high', label: 'Élevée' },
+  { value: 'critical', label: 'Critique' }
+];
+
+const statusOptions = [
+  { value: 'all', label: 'Tous les statuts' },
+  { value: 'active', label: 'Actif' },
+  { value: 'found', label: 'Retrouvé' },
+  { value: 'closed', label: 'Fermé' }
+];
+
 export const SearchFilters: React.FC = () => {
   const { searchFilters, updateFilters } = useMissingPersonsStore();
   const [localFilters, setLocalFilters] = React.useState({
     query: searchFilters.query || '',
     gender: searchFilters.gender || 'all',
+    caseType: searchFilters.caseType || 'all',
+    priority: searchFilters.priority || 'all',
+    status: searchFilters.status || 'all',
     location: searchFilters.location || '',
     minAge: searchFilters.ageRange?.min?.toString() || '',
     maxAge: searchFilters.ageRange?.max?.toString() || '',
     startDate: searchFilters.dateRange?.start || '',
-    endDate: searchFilters.dateRange?.end || ''
+    endDate: searchFilters.dateRange?.end || '',
+    isEmergency: searchFilters.isEmergency || false
   });
 
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
-  const handleFilterChange = (field: string, value: string) => {
+  const handleFilterChange = (field: string, value: string | boolean) => {
     setLocalFilters(prev => ({ ...prev, [field]: value }));
   };
 
@@ -35,7 +63,11 @@ export const SearchFilters: React.FC = () => {
     const filters: any = {
       query: localFilters.query || undefined,
       gender: localFilters.gender !== 'all' ? localFilters.gender : undefined,
-      location: localFilters.location || undefined
+      caseType: localFilters.caseType !== 'all' ? localFilters.caseType : undefined,
+      priority: localFilters.priority !== 'all' ? localFilters.priority : undefined,
+      status: localFilters.status !== 'all' ? localFilters.status : undefined,
+      location: localFilters.location || undefined,
+      isEmergency: localFilters.isEmergency || undefined
     };
 
     if (localFilters.minAge || localFilters.maxAge) {
@@ -59,18 +91,22 @@ export const SearchFilters: React.FC = () => {
     setLocalFilters({
       query: '',
       gender: 'all',
+      caseType: 'all',
+      priority: 'all',
+      status: 'all',
       location: '',
       minAge: '',
       maxAge: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      isEmergency: false
     });
     updateFilters({});
   };
 
   React.useEffect(() => {
     applyFilters();
-  }, [localFilters.query, localFilters.gender, localFilters.location]);
+  }, [localFilters.query, localFilters.gender, localFilters.caseType, localFilters.priority, localFilters.status, localFilters.location, localFilters.isEmergency]);
 
   return (
     <Card variant="elevated" className="mb-6">
@@ -94,7 +130,7 @@ export const SearchFilters: React.FC = () => {
 
         <div className="space-y-4">
           {/* Basic Search */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Input
               placeholder="Rechercher par nom ou localisation..."
               leftIcon={<Search className="h-5 w-5" />}
@@ -109,6 +145,40 @@ export const SearchFilters: React.FC = () => {
               value={localFilters.gender}
               onChange={(e) => handleFilterChange('gender', e.target.value)}
             />
+            <Select
+              placeholder="Type de cas"
+              options={caseTypeOptions}
+              value={localFilters.caseType}
+              onChange={(e) => handleFilterChange('caseType', e.target.value)}
+            />
+          </div>
+          
+          {/* Secondary Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              placeholder="Priorité"
+              options={priorityOptions}
+              value={localFilters.priority}
+              onChange={(e) => handleFilterChange('priority', e.target.value)}
+            />
+            <Select
+              placeholder="Statut"
+              options={statusOptions}
+              value={localFilters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+            />
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="emergency"
+                checked={localFilters.isEmergency}
+                onChange={(e) => handleFilterChange('isEmergency', e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="emergency" className="text-sm font-medium text-gray-700">
+                Cas d'urgence uniquement
+              </label>
+            </div>
           </div>
 
           {/* Advanced Filters */}

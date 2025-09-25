@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { MapPin, Calendar, User, Share, AlertTriangle, Eye, Clock } from 'lucide-react';
+import { CaseTypeBadge } from '../ui/CaseTypeBadge';
 
 interface ReportCardProps {
   report: MissingPerson;
@@ -63,9 +64,17 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
                   <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
                     {report.firstName} {report.lastName}
                   </h3>
-                  <Badge variant={report.status === 'active' ? 'error' : 'success'} size="sm">
-                    {report.status === 'active' ? 'Disparu' : 'Retrouvé'}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <CaseTypeBadge 
+                      caseType={report.caseType} 
+                      priority={report.priority}
+                      isEmergency={report.isEmergency}
+                      className="text-xs"
+                    />
+                    <Badge variant={report.status === 'active' ? 'error' : 'success'} size="sm">
+                      {report.status === 'active' ? 'Disparu' : 'Retrouvé'}
+                    </Badge>
+                  </div>
                 </div>
                 
                 <p className="text-sm text-gray-600 mb-2">
@@ -104,7 +113,12 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
               )}
               
               {/* Status Badge */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <CaseTypeBadge 
+                  caseType={report.caseType} 
+                  priority={report.priority}
+                  isEmergency={report.isEmergency}
+                />
                 <Badge variant={report.status === 'active' ? 'error' : 'success'} size="sm">
                   {report.status === 'active' ? 'Disparu' : 'Retrouvé'}
                 </Badge>

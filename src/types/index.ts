@@ -8,6 +8,9 @@ export interface User {
   updatedAt?: string;
 }
 
+export type CaseType = 'disappearance' | 'runaway' | 'abduction' | 'missing_adult' | 'missing_child';
+export type CasePriority = 'low' | 'medium' | 'high' | 'critical';
+
 export interface MissingPerson {
   id: string;
   firstName: string;
@@ -16,6 +19,7 @@ export interface MissingPerson {
   gender: 'male' | 'female' | 'other';
   photo?: string;
   dateDisappeared: string;
+  timeDisappeared?: string;
   locationDisappeared: Location;
   description: string;
   reporterContact: ReporterContact;
@@ -23,6 +27,15 @@ export interface MissingPerson {
   createdAt: string;
   updatedAt: string;
   status: 'active' | 'found' | 'closed';
+  caseType: CaseType;
+  priority: CasePriority;
+  circumstances?: string;
+  isEmergency: boolean;
+  lastContactDate?: string;
+  clothingDescription?: string;
+  personalItems?: string;
+  medicalInfo?: string;
+  behavioralInfo?: string;
 }
 
 export interface Location {
@@ -55,6 +68,10 @@ export interface SearchFilters {
     start: string;
     end: string;
   };
+  caseType?: CaseType;
+  priority?: CasePriority;
+  isEmergency?: boolean;
+  status?: 'active' | 'found' | 'closed';
 }
 
 export interface GeolocationAlert {
