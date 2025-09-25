@@ -4,15 +4,15 @@ import { Search, Shield, Mail, Phone } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="glass-nav text-white relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo et description */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
               <div className="relative">
-                <Search className="h-8 w-8 text-primary-400" />
-                <div className="absolute -top-1 -right-1 h-3 w-3 bg-amber-500 rounded-full animate-pulse"></div>
+                <Search className="h-8 w-8 text-primary-400 animate-glow" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-primary-500 rounded-full animate-pulse shadow-brand-glow"></div>
               </div>
               <span className="font-bold text-xl">AlertDisparu</span>
             </div>

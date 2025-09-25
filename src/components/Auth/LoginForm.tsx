@@ -42,26 +42,33 @@ export const LoginForm: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-300/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-300/20 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-200/10 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
+      
+      <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-6">
             <div className="relative">
-              <Search className="h-12 w-12 text-primary-600" />
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-amber-500 rounded-full animate-pulse"></div>
+              <Search className="h-12 w-12 text-primary-600 animate-glow" />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-primary-500 rounded-full animate-pulse shadow-brand-glow"></div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">
             Connexion
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700 text-lg">
             Accédez à votre compte AlertDisparu
           </p>
         </div>
         
         {/* Form Card */}
-        <Card variant="elevated" className="animate-fade-in">
+        <Card variant="glass-strong" className="animate-fade-in">
           <CardHeader>
             <CardTitle className="text-center text-xl">Bienvenue</CardTitle>
             <CardDescription className="text-center">
@@ -77,6 +84,7 @@ export const LoginForm: React.FC = () => {
                   type="email"
                   placeholder="votre@email.com"
                   leftIcon={<Mail className="h-5 w-5" />}
+                  variant="glass"
                   {...register('email')}
                   error={errors.email?.message}
                   required
@@ -88,6 +96,7 @@ export const LoginForm: React.FC = () => {
                   placeholder="Votre mot de passe"
                   leftIcon={<Lock className="h-5 w-5" />}
                   showPasswordToggle={true}
+                  variant="glass"
                   {...register('password')}
                   error={errors.password?.message}
                   required
@@ -105,6 +114,7 @@ export const LoginForm: React.FC = () => {
                 type="submit"
                 className="w-full"
                 size="lg"
+                variant="glass"
                 isLoading={loading}
                 leftIcon={<Shield className="h-5 w-5" />}
               >

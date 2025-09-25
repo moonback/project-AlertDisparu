@@ -9,10 +9,11 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: Array<{ value: string; label: string }>;
   placeholder?: string;
   leftIcon?: React.ReactNode;
+  variant?: 'default' | 'glass';
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, helperText, options, placeholder = "Sélectionner...", leftIcon, className, ...props }, ref) => {
+  ({ label, error, helperText, options, placeholder = "Sélectionner...", leftIcon, variant = 'default', className, ...props }, ref) => {
     return (
       <div className="space-y-2">
         {label && (
@@ -32,9 +33,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select
             ref={ref}
             className={cn(
-              'input-field appearance-none pr-10',
+              variant === 'glass' ? 'glass-input appearance-none pr-10' : 'input-field appearance-none pr-10',
               leftIcon && 'pl-10',
-              error && 'error',
+              error && variant === 'default' && 'error',
+              error && variant === 'glass' && 'border-red-300 focus:ring-red-400',
               className
             )}
             {...props}

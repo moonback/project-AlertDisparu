@@ -123,8 +123,8 @@ export const ReportDetail: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-6">
+      {/* Header avec effet glass */}
+      <div className="glass-hero p-6 mb-8">
         <Link to="/rapports" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4 transition-colors">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Retour aux rapports
@@ -140,11 +140,11 @@ export const ReportDetail: React.FC = () => {
         
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 glass-shimmer">
               {report.firstName} {report.lastName}
             </h1>
             <div className="mt-2 flex items-center gap-3">
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gray-700">
                 Disparu(e) depuis {daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}
               </p>
               <CaseTypeBadge 
@@ -154,7 +154,7 @@ export const ReportDetail: React.FC = () => {
               />
             </div>
           </div>
-          <Button onClick={handleShare} leftIcon={<Share className="h-4 w-4" />}>
+          <Button variant="glass" onClick={handleShare} leftIcon={<Share className="h-4 w-4" />}>
             Partager le rapport
           </Button>
         </div>
@@ -162,24 +162,24 @@ export const ReportDetail: React.FC = () => {
 
       {/* Onglets */}
       <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+        <div className="glass-card p-2">
+          <nav className="flex space-x-2">
             <button
               onClick={() => setActiveTab('details')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 activeTab === 'details'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'glass-nav-item active'
+                  : 'glass-nav-item'
               }`}
             >
               Détails du rapport
             </button>
             <button
               onClick={() => setActiveTab('investigation')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 activeTab === 'investigation'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'glass-nav-item active'
+                  : 'glass-nav-item'
               }`}
             >
               Investigation
@@ -194,7 +194,7 @@ export const ReportDetail: React.FC = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Photo and Basic Info */}
-          <Card variant="elevated">
+          <Card variant="glass">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-shrink-0">
@@ -247,7 +247,7 @@ export const ReportDetail: React.FC = () => {
           </Card>
 
           {/* Last Known Location */}
-          <Card variant="elevated">
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <MapPin className="h-5 w-5 mr-2 text-primary-600" />
@@ -271,7 +271,7 @@ export const ReportDetail: React.FC = () => {
           </Card>
 
           {/* Description */}
-          <Card variant="elevated">
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <Info className="h-5 w-5 mr-2 text-primary-600" />
@@ -466,7 +466,7 @@ export const ReportDetail: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Contact Information */}
-          <Card variant="elevated">
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <Phone className="h-5 w-5 mr-2 text-primary-600" />
@@ -502,7 +502,7 @@ export const ReportDetail: React.FC = () => {
           </Card>
 
           {/* Report Information */}
-          <Card variant="elevated">
+          <Card variant="glass">
             <CardHeader>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                 <Info className="h-5 w-5 mr-2 text-primary-600" />

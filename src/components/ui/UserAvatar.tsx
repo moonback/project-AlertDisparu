@@ -9,7 +9,7 @@ interface UserAvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   showIndicator?: boolean;
   className?: string;
-  variant?: 'default' | 'ring' | 'shadow';
+  variant?: 'default' | 'ring' | 'shadow' | 'glass';
 }
 
 const sizeClasses = {
@@ -31,7 +31,8 @@ const iconSizes = {
 const variants = {
   default: '',
   ring: 'ring-2 ring-primary-200',
-  shadow: 'shadow-soft'
+  shadow: 'shadow-soft',
+  glass: 'bg-white/20 backdrop-blur-sm border border-white/30 shadow-glass'
 };
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({ 
@@ -135,7 +136,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       
       {/* Indicateur de photo manquante */}
       {showIndicator && !loading && !profilePicture && (
-        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white shadow-soft flex items-center justify-center">
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary-500 rounded-full border-2 border-white shadow-brand-glow flex items-center justify-center">
           <Camera className="h-2 w-2 text-white" />
         </div>
       )}

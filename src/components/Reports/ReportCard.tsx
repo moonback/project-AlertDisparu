@@ -44,7 +44,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
   if (variant === 'compact') {
     return (
       <Link to={`/rapports/${report.id}`}>
-        <Card variant="elevated" className="hover:shadow-strong transition-all duration-300 group cursor-pointer">
+        <Card variant="glass" className="hover:shadow-brand-glow transition-all duration-300 group cursor-pointer">
           <CardContent className="p-4">
             <div className="flex items-center space-x-4">
               {report.photo ? (
@@ -95,7 +95,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, variant = 'defau
 
   return (
     <Link to={`/rapports/${report.id}`}>
-      <Card variant="elevated" className="h-full hover:shadow-strong transition-all duration-300 group cursor-pointer">
+      <Card variant="glass" className="h-full hover:shadow-brand-glow transition-all duration-300 group cursor-pointer">
         <CardContent className="p-0">
           <div className="flex flex-col h-full">
             {/* Image */}

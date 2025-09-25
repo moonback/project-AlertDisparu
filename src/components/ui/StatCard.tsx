@@ -23,13 +23,13 @@ export const StatCard: React.FC<StatCardProps> = ({
   className
 }) => {
   return (
-    <div className={cn('bg-white rounded-xl border border-gray-200 shadow-soft hover:shadow-medium transition-all duration-300 p-6', className)}>
+    <div className={cn('glass-card p-6 hover:shadow-brand-glow transition-all duration-300', className)}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">{title}</p>
           <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
           {description && (
-            <p className="text-sm text-gray-500">{description}</p>
+            <p className="text-sm text-gray-600">{description}</p>
           )}
           {trend && (
             <div className="flex items-center mt-2">
@@ -45,7 +45,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         </div>
         {icon && (
           <div className="flex-shrink-0 ml-4">
-            <div className="p-3 bg-gray-100 rounded-full">
+            <div className="p-3 bg-white/30 rounded-full border border-white/20">
               {icon}
             </div>
           </div>

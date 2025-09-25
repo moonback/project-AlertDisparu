@@ -17,29 +17,32 @@ export const ReportsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <div className="flex items-center mb-4">
-            <Search className="h-8 w-8 text-primary-600 mr-3" />
-            <h1 className="text-3xl font-bold text-gray-900">Rapports de personnes disparues</h1>
+      {/* Header avec effet glass */}
+      <div className="glass-hero p-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="flex items-center mb-4">
+              <Search className="h-8 w-8 text-primary-600 mr-3 animate-glow" />
+              <h1 className="text-4xl font-bold text-gray-900 glass-shimmer">Rapports de personnes disparues</h1>
+            </div>
+            <p className="text-gray-700 text-lg">
+              {filteredReports.length} rapport{filteredReports.length !== 1 ? 's' : ''} trouvé{filteredReports.length !== 1 ? 's' : ''}
+              {Object.keys(searchFilters).length > 0 && ' (filtrés)'}
+            </p>
           </div>
-          <p className="text-gray-600">
-            {filteredReports.length} rapport{filteredReports.length !== 1 ? 's' : ''} trouvé{filteredReports.length !== 1 ? 's' : ''}
-            {Object.keys(searchFilters).length > 0 && ' (filtrés)'}
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <Link to="/signalement">
-            <Button leftIcon={<Plus className="h-4 w-4" />}>
-              Nouveau signalement
-            </Button>
-          </Link>
-          <Link to="/signalement/alerte">
-            <Button variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
-              Depuis une affiche
-            </Button>
-          </Link>
+          
+          <div className="flex items-center space-x-3">
+            <Link to="/signalement">
+              <Button variant="glass" leftIcon={<Plus className="h-4 w-4" />}>
+                Nouveau signalement
+              </Button>
+            </Link>
+            <Link to="/signalement/alerte">
+              <Button variant="glass" leftIcon={<FileText className="h-4 w-4" />}>
+                Depuis une affiche
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
