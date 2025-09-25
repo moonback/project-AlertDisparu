@@ -25,9 +25,9 @@ export const Header: React.FC = () => {
             {isAuthenticated && (
               <nav className="hidden md:flex space-x-6">
                 <Link
-                  to="/reports"
+                  to="/rapports"
                   className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActiveRoute('/reports')
+                    isActiveRoute('/rapports')
                       ? 'text-red-600 bg-red-50'
                       : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
                   }`}
@@ -61,10 +61,17 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <Link
+                  to="/profil"
+                  className={`flex items-center space-x-2 text-sm transition-colors ${
+                    isActiveRoute('/profil')
+                      ? 'text-red-600'
+                      : 'text-gray-700 hover:text-red-600'
+                  }`}
+                >
                   <User className="h-4 w-4" />
                   <span>{user?.firstName} {user?.lastName}</span>
-                </div>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"

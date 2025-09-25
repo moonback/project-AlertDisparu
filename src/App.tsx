@@ -7,6 +7,7 @@ import { LoginForm } from './components/Auth/LoginForm';
 import { RegisterForm } from './components/Auth/RegisterForm';
 import { HomePage } from './pages/HomePage';
 import { ReportsPage } from './pages/ReportsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { ReportForm } from './components/Reports/ReportForm';
 import { ReportDetail } from './components/Reports/ReportDetail';
 import { MissingPersonsMap } from './components/Map/MissingPersonsMap';
@@ -88,6 +89,14 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <MissingPersonsMap />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/profil" element={
+          <ProtectedRoute>
+            <Layout>
+              <ProfilePage />
             </Layout>
           </ProtectedRoute>
         } />
