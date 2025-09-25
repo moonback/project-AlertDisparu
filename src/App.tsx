@@ -12,6 +12,7 @@ import { ReportForm } from './components/Reports/ReportForm';
 import { ReportDetail } from './components/Reports/ReportDetail';
 import { MissingPersonsMap } from './components/Map/MissingPersonsMap';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { AuthDebugPanel } from './components/ui/AuthDebugPanel';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +50,12 @@ function App() {
 
   return (
     <Router>
+      {/* Panneau de débogage d'authentification - seulement si pas de problème de hot reload */}
+      {!window.location.href.includes('localhost') || 
+       !localStorage.getItem('disable-debug-panel') ? (
+        <AuthDebugPanel />
+      ) : null}
+      
       <Routes>
         {/* Public Routes */}
         <Route path="/connexion" element={<PublicRoute><LoginForm /></PublicRoute>} />

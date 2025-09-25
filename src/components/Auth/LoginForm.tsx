@@ -28,13 +28,21 @@ export const LoginForm: React.FC = () => {
   });
   
   const onSubmit = async (data: LoginFormData) => {
+    console.log('📝 [LOGIN_FORM] Soumission du formulaire de connexion');
+    console.log('📝 [LOGIN_FORM] Email:', data.email);
+    console.log('📝 [LOGIN_FORM] Mot de passe:', data.password ? '***' : 'Vide');
+    
     setError('');
     
     const result = await login(data.email, data.password);
     
+    console.log('📝 [LOGIN_FORM] Résultat de la connexion:', result);
+    
     if (result.success) {
+      console.log('✅ [LOGIN_FORM] Connexion réussie, redirection vers /rapports');
       navigate('/rapports');
     } else {
+      console.error('❌ [LOGIN_FORM] Échec de la connexion:', result.error);
       setError(result.error || 'Erreur de connexion');
     }
   };
