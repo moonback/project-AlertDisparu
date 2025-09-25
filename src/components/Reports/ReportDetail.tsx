@@ -5,7 +5,8 @@ import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Alert } from '../ui/Alert';
-import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, AlertTriangle, Clock, Eye, Info } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Share, AlertTriangle, Clock, Eye, Info, AlertCircle } from 'lucide-react';
+import { CaseTypeBadge } from '../ui/CaseTypeBadge';
 
 export const ReportDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -104,9 +105,16 @@ export const ReportDetail: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">
               {report.firstName} {report.lastName}
             </h1>
-            <p className="mt-1 text-lg text-gray-600">
-              Disparu(e) depuis {daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <p className="text-lg text-gray-600">
+                Disparu(e) depuis {daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}
+              </p>
+              <CaseTypeBadge 
+                caseType={report.caseType} 
+                priority={report.priority}
+                isEmergency={report.isEmergency}
+              />
+            </div>
           </div>
           <Button onClick={handleShare} leftIcon={<Share className="h-4 w-4" />}>
             Partager le rapport
@@ -158,6 +166,12 @@ export const ReportDetail: React.FC = () => {
                       <Clock className="h-4 w-4 mr-1" />
                       <span>{daysSinceMissing} jour{daysSinceMissing !== 1 ? 's' : ''}</span>
                     </div>
+                    {report.isEmergency && (
+                      <div className="flex items-center text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        <span className="font-medium">URGENCE</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -197,8 +211,52 @@ export const ReportDetail: React.FC = () => {
               </h3>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-700 leading-relaxed">{report.description}</p>
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700 leading-relaxed">{report.description}</p>
+                </div>
+                
+                {report.circumstances && (
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-2">Circonstances spécifiques</h4>
+                    <p className="text-blue-800">{report.circumstances}</p>
+                  </div>
+                )}
+                
+                {report.timeDisappeared && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <h4 className="font-medium text-gray-900 mb-1">Heure de disparition</h4>
+                    <p className="text-gray-700">{report.timeDisappeared}</p>
+                  </div>
+                )}
+                
+                {report.clothingDescription && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <h4 className="font-medium text-gray-900 mb-1">Vêtements portés</h4>
+                    <p className="text-gray-700">{report.clothingDescription}</p>
+                  </div>
+                )}
+                
+                {report.personalItems && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <h4 className="font-medium text-gray-900 mb-1">Objets personnels</h4>
+                    <p className="text-gray-700">{report.personalItems}</p>
+                  </div>
+                )}
+                
+                {report.medicalInfo && (
+                  <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+                    <h4 className="font-medium text-red-900 mb-1">Informations médicales importantes</h4>
+                    <p className="text-red-800">{report.medicalInfo}</p>
+                  </div>
+                )}
+                
+                {report.behavioralInfo && (
+                  <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                    <h4 className="font-medium text-yellow-900 mb-1">Informations comportementales</h4>
+                    <p className="text-yellow-800">{report.behavioralInfo}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

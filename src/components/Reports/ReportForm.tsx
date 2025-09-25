@@ -9,7 +9,7 @@ import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
-import { Upload, X, MapPin, User, Calendar, Phone, Mail } from 'lucide-react';
+import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
@@ -24,11 +24,20 @@ const reportSchema = z.object({
   gender: z.enum(['male', 'female', 'other'], {
     required_error: 'Veuillez sélectionner le genre'
   }),
+  caseType: z.enum(['disappearance', 'runaway', 'abduction', 'missing_adult', 'missing_child'], {
+    required_error: 'Veuillez sélectionner le type de cas'
+  }),
   dateDisappeared: z.string().min(1, 'La date est requise'),
+  timeDisappeared: z.string().optional(),
   locationAddress: z.string().min(5, "L'adresse doit contenir au moins 5 caractères"),
   locationCity: z.string().min(2, 'La ville doit contenir au moins 2 caractères'),
   locationState: z.string().min(2, "L'État/la région doit contenir au moins 2 caractères"),
   description: z.string().min(10, 'La description doit contenir au moins 10 caractères'),
+  circumstances: z.string().optional(),
+  clothingDescription: z.string().optional(),
+  personalItems: z.string().optional(),
+  medicalInfo: z.string().optional(),
+  behavioralInfo: z.string().optional(),
   reporterName: z.string().min(2, 'Le nom du déclarant doit contenir au moins 2 caractères'),
   reporterRelationship: z.string().min(2, 'Le lien avec la personne doit être précisé'),
   reporterPhone: z.string().min(10, 'Le numéro de téléphone doit contenir au moins 10 chiffres'),
@@ -44,6 +53,14 @@ const genderOptions = [
   { value: 'male', label: 'Homme' },
   { value: 'female', label: 'Femme' },
   { value: 'other', label: 'Autre' }
+];
+
+const caseTypeOptions = [
+  { value: 'disappearance', label: 'Disparition générale' },
+  { value: 'runaway', label: 'Fugue' },
+  { value: 'abduction', label: 'Enlèvement' },
+  { value: 'missing_adult', label: 'Adulte disparu' },
+  { value: 'missing_child', label: 'Enfant disparu' }
 ];
 
 export const ReportForm: React.FC = () => {
@@ -116,7 +133,9 @@ export const ReportForm: React.FC = () => {
         age: data.age,
         gender: data.gender,
         photo: uploadedImage || undefined,
+        caseType: data.caseType,
         dateDisappeared: data.dateDisappeared,
+        timeDisappeared: data.timeDisappeared,
         locationDisappeared: {
           address: data.locationAddress,
           city: data.locationCity,
@@ -125,6 +144,11 @@ export const ReportForm: React.FC = () => {
           coordinates: coordinates
         },
         description: data.description,
+        circumstances: data.circumstances,
+        clothingDescription: data.clothingDescription,
+        personalItems: data.personalItems,
+        medicalInfo: data.medicalInfo,
+        behavioralInfo: data.behavioralInfo,
         reporterContact: {
           name: data.reporterName,
           relationship: data.reporterRelationship,
@@ -204,6 +228,14 @@ export const ReportForm: React.FC = () => {
                 error={errors.gender?.message}
                 required
               />
+              
+              <Select
+                label="Type de cas"
+                options={caseTypeOptions}
+                {...register('caseType')}
+                error={errors.caseType?.message}
+                required
+              />
             </div>
             
             {/* Téléversement de la photo */}
@@ -261,14 +293,24 @@ export const ReportForm: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6">
-              <Input
-                label="Date de disparition"
-                type="date"
-                leftIcon={<Calendar className="h-5 w-5" />}
-                {...register('dateDisappeared')}
-                error={errors.dateDisappeared?.message}
-                required
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Date de disparition"
+                  type="date"
+                  leftIcon={<Calendar className="h-5 w-5" />}
+                  {...register('dateDisappeared')}
+                  error={errors.dateDisappeared?.message}
+                  required
+                />
+                
+                <Input
+                  label="Heure approximative"
+                  type="time"
+                  leftIcon={<Clock className="h-5 w-5" />}
+                  {...register('timeDisappeared')}
+                  error={errors.timeDisappeared?.message}
+                />
+              </div>
               
               <Input
                 label="Adresse"
@@ -317,19 +359,81 @@ export const ReportForm: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Description & circonstances</h2>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Description détaillée <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                {...register('description')}
-                rows={4}
-                className="input-field !min-h-[120px]"
-                placeholder="Décrivez les vêtements, le comportement avant la disparition et toute circonstance pertinente..."
-              />
-              {errors.description && (
-                <p className="text-sm text-red-600">{errors.description.message}</p>
-              )}
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Description détaillée <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  {...register('description')}
+                  rows={4}
+                  className="input-field !min-h-[120px]"
+                  placeholder="Décrivez les circonstances de la disparition, le comportement avant la disparition et toute information pertinente..."
+                />
+                {errors.description && (
+                  <p className="text-sm text-red-600">{errors.description.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Circonstances spécifiques
+                </label>
+                <textarea
+                  {...register('circumstances')}
+                  rows={3}
+                  className="input-field"
+                  placeholder="Décrivez les circonstances particulières (conflit familial, problème scolaire, etc.)..."
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Vêtements portés au moment de la disparition
+                </label>
+                <textarea
+                  {...register('clothingDescription')}
+                  rows={2}
+                  className="input-field"
+                  placeholder="Décrivez les vêtements, chaussures, accessoires..."
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Objets personnels emportés ou laissés
+                </label>
+                <textarea
+                  {...register('personalItems')}
+                  rows={2}
+                  className="input-field"
+                  placeholder="Téléphone, portefeuille, clés, sac à dos, etc."
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Informations médicales importantes
+                </label>
+                <textarea
+                  {...register('medicalInfo')}
+                  rows={2}
+                  className="input-field"
+                  placeholder="Médicaments, conditions médicales, allergies..."
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Informations comportementales récentes
+                </label>
+                <textarea
+                  {...register('behavioralInfo')}
+                  rows={2}
+                  className="input-field"
+                  placeholder="Changements d'humeur, problèmes récents, habitudes..."
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
