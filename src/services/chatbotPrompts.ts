@@ -156,7 +156,7 @@ ${this.calculateStatistics(reports, observations)}
         const daysSince = Math.floor(
           (new Date().getTime() - new Date(report.dateDisappeared).getTime()) / (1000 * 60 * 60 * 24)
         );
-        const urgency = report.isEmergency ? '🚨 URGENCE' : '';
+        const urgency = report.isEmergency ? ' URGENCE' : '';
         const priority = this.getPriorityIcon(report.priority);
         
         // Vérification sécurisée des données

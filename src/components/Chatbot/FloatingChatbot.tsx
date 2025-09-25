@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Minimize2, Maximize2, HelpCircle, MessageSquare, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Minimize2, Maximize2, MessageSquare, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { ChatbotService, ChatMessage } from '../../services/chatbotService';
 import { useAuth } from '../../hooks/useAuth';
 import { cn } from '../../utils/cn';
-import { QuickSuggestions } from './QuickSuggestions';
 import { ChatMessage as ChatMessageComponent } from './ChatMessage';
 import { ConversationList } from './ConversationList';
 import { SmartSuggestions } from './SmartSuggestions';
@@ -18,12 +17,12 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
   const [showSmartSuggestions, setShowSmartSuggestions] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [isFirstMessage, setIsFirstMessage] = useState(true);
   const [chatbotService] = useState(() => new ChatbotService());
+  const [ttsEnabled, setTtsEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, loading: authLoading } = useAuth();
@@ -35,11 +34,11 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       chatbotService.updateUserContext(user);
       console.log('✅ Utilisateur configuré dans le chatbot:', user.id);
       
-      // Synchroniser la conversation active avec le service
-      if (activeConversationId) {
-        console.log('🔄 Synchronisation conversation active avec le service:', activeConversationId);
-        chatbotService.context.currentConversationId = activeConversationId;
-      }
+       // Synchroniser la conversation active avec le service
+       if (activeConversationId) {
+         console.log('🔄 Synchronisation conversation active avec le service:', activeConversationId);
+         chatbotService.setCurrentConversationId(activeConversationId);
+       }
     } else {
       // Réinitialiser le service si l'utilisateur se déconnecte
       chatbotService.updateUserContext(null);
@@ -59,6 +58,160 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     scrollToBottom();
   }, [messages]);
 
+  // Fonction pour nettoyer le texte pour TTS
+  const cleanTextForTts = (text: string): string => {
+    return text
+      // Retirer les marqueurs Markdown
+      .replace(/#{1,6}\s*/g, '') // Titres (# ## ### etc.)
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Gras (**texte**)
+      .replace(/\*(.*?)\*/g, '$1') // Italique (*texte*)
+      .replace(/`(.*?)`/g, '$1') // Code inline (`code`)
+      .replace(/```[\s\S]*?```/g, '') // Blocs de code
+      .replace(/~~(.*?)~~/g, '$1') // Barré (~~texte~~)
+      
+      // Retirer les caractères spéciaux
+      .replace(/[#*`~_[\](){}]/g, '') // Caractères Markdown
+      .replace(/[|\\]/g, '') // Pipes et backslashes
+      .replace(/\s+/g, ' ') // Espaces multiples
+      
+      // Nettoyer les listes
+      .replace(/^\s*[-*+]\s+/gm, '') // Puces de liste
+      .replace(/^\s*\d+\.\s+/gm, '') // Numérotation
+      
+      // Remplacer les emojis par du texte
+      .replace(/👋/g, 'bonjour')
+      .replace(/🤖/g, 'robot')
+      .replace(/📊/g, 'statistiques')
+      .replace(/🔍/g, 'recherche')
+      .replace(/✅/g, 'valide')
+      .replace(/❌/g, 'erreur')
+      .replace(/⚠️/g, 'attention')
+      .replace(/💡/g, 'idée')
+      .replace(/🎯/g, 'objectif')
+      .replace(/🚀/g, 'lancement')
+      .replace(/⭐/g, 'étoile')
+      .replace(/🔥/g, 'chaud')
+      .replace(/💪/g, 'fort')
+      .replace(/🎉/g, 'fête')
+      .replace(/🙏/g, 'merci')
+      .replace(/👍/g, 'bien')
+      .replace(/👎/g, 'mal')
+      .replace(/❤️/g, 'coeur')
+      .replace(/😊/g, 'sourire')
+      .replace(/😢/g, 'triste')
+      .replace(/😮/g, 'surpris')
+      .replace(/😡/g, 'en colère')
+      
+      // Nettoyer les espaces et retours à la ligne
+      .replace(/\n\s*\n/g, '. ') // Paragraphes
+      .replace(/\n/g, ' ') // Retours à la ligne
+      .replace(/\s+/g, ' ') // Espaces multiples
+      .trim();
+  };
+
+  // Fonction pour lire un texte avec TTS
+  const speakText = (text: string) => {
+    if (!ttsEnabled) return;
+    
+    // Nettoyer le texte
+    const cleanText = cleanTextForTts(text);
+    
+    // Vérifier que le texte n'est pas vide après nettoyage
+    if (!cleanText || cleanText.length < 3) return;
+    
+    // Arrêter toute lecture en cours
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    
+    // Configuration améliorée de la voix
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.85; // Vitesse plus lente pour une meilleure compréhension
+    utterance.pitch = 1.1; // Légèrement plus aigu pour une voix plus claire
+    utterance.volume = 0.9; // Volume plus élevé
+
+    // Sélectionner la meilleure voix française disponible
+    const voices = window.speechSynthesis.getVoices();
+    let selectedVoice = null;
+    
+    // Priorité 1: Voix Google française spécifique
+    selectedVoice = voices.find(voice => 
+      voice.lang === 'fr-FR' && voice.name.includes('Google')
+    );
+    
+    // Priorité 2: Toute voix Google française
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.lang.startsWith('fr') && voice.name.includes('Google')
+      );
+    }
+    
+    // Priorité 3: Voix française haute qualité (Microsoft, Natural, etc.)
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.lang === 'fr-FR' && 
+        (voice.name.includes('Microsoft') || voice.name.includes('Natural') || voice.name.includes('Enhanced'))
+      );
+    }
+    
+    // Priorité 4: Toute voix française de qualité
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.lang.startsWith('fr') && 
+        (voice.name.includes('Microsoft') || voice.name.includes('Natural') || voice.name.includes('Enhanced'))
+      );
+    }
+    
+    // Priorité 5: Toute voix française
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => voice.lang.startsWith('fr'));
+    }
+    
+    // Priorité 6: Voix par défaut du système
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => voice.default);
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      console.log('🎤 Voix sélectionnée:', selectedVoice.name, selectedVoice.lang);
+    } else {
+      console.warn('🎤 Aucune voix française trouvée, utilisation de la voix par défaut');
+    }
+
+    // Événements pour le debugging
+    utterance.onstart = () => {
+      console.log('🎤 Début de la lecture TTS');
+    };
+    
+    utterance.onend = () => {
+      console.log('🎤 Fin de la lecture TTS');
+    };
+    
+    utterance.onerror = (event) => {
+      console.error('🎤 Erreur TTS:', event.error);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Fonction pour arrêter la lecture TTS
+  const stopSpeaking = () => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  // Basculer l'état TTS
+  const toggleTts = () => {
+    setTtsEnabled(!ttsEnabled);
+    if (ttsEnabled) {
+      stopSpeaking();
+    }
+  };
+
   // Focus sur l'input quand la chatbox s'ouvre
   useEffect(() => {
     if (isOpen && !isMinimized && inputRef.current) {
@@ -73,32 +226,33 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     setShowSmartSuggestions(false);
 
     const userMessage = inputValue.trim();
-    console.log('📤 Envoi du message:', userMessage);
-    console.log('🆔 Conversation active:', activeConversationId);
-    console.log('🔧 Service chatbot:', chatbotService);
-    console.log('🔧 Service context:', chatbotService.context);
     
-    setInputValue('');
-    setShowSuggestions(false);
-    setShowConversations(false);
+    
+     setInputValue('');
+     setShowConversations(false);
     setIsLoading(true);
 
     try {
-      console.log('🚀 Appel à processMessage...');
       
       // S'assurer que le service utilise la conversation active de l'interface
-      if (activeConversationId && !chatbotService.context.currentConversationId) {
+      if (activeConversationId) {
         console.log('🔄 Forcer la conversation active dans le service:', activeConversationId);
-        chatbotService.context.currentConversationId = activeConversationId;
+        chatbotService.setCurrentConversationId(activeConversationId);
       }
       
-      const response = await chatbotService.processMessage(userMessage);
-      console.log('📨 Réponse reçue:', response);
-      setMessages(prev => {
-        const newMessages = [...prev, response];
-        console.log('💾 Messages mis à jour:', newMessages.length, newMessages);
-        return newMessages;
-      });
+       const response = await chatbotService.processMessage(userMessage);
+       setMessages(prev => {
+         const newMessages = [...prev, response];
+         
+         // Lire la réponse avec TTS si activé
+         if (ttsEnabled && response.role === 'assistant') {
+           setTimeout(() => {
+             speakText(response.content);
+           }, 500); // Petit délai pour que l'interface se mette à jour
+         }
+         
+         return newMessages;
+       });
       
       // Récupérer l'ID de conversation depuis le service
       const currentConvId = response.conversationId || activeConversationId;
@@ -135,22 +289,15 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
-    setShowSuggestions(false);
-    setShowConversations(false);
-    inputRef.current?.focus();
-  };
 
 
   const handleNewConversation = async () => {
-    try {
-      setMessages([]);
-      setActiveConversationId(undefined);
-      setIsFirstMessage(true);
-      setShowConversations(false);
-      setShowSmartSuggestions(true);
-      setShowSuggestions(true);
+     try {
+       setMessages([]);
+       setActiveConversationId(undefined);
+       setIsFirstMessage(true);
+       setShowConversations(false);
+       setShowSmartSuggestions(true);
       
       // Créer une nouvelle conversation
       const newConversationId = await chatbotService.createConversation();
@@ -196,7 +343,6 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
 
   const clearChat = () => {
     setMessages([]);
-    setShowSuggestions(true);
     setShowSmartSuggestions(true);
     setActiveConversationId(undefined);
   };
@@ -215,12 +361,11 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
       await chatbotService.deleteAllConversations();
       
       // Réinitialiser l'interface
-      setMessages([]);
-      setActiveConversationId(undefined);
-      setIsFirstMessage(true);
-      setShowConversations(false);
-      setShowSmartSuggestions(true);
-      setShowSuggestions(true);
+       setMessages([]);
+       setActiveConversationId(undefined);
+       setIsFirstMessage(true);
+       setShowConversations(false);
+       setShowSmartSuggestions(true);
       
       console.log('✅ Toutes les conversations ont été supprimées');
     } catch (error) {
@@ -229,40 +374,72 @@ export const FloatingChatbot: React.FC<FloatingChatbotProps> = ({ className }) =
     }
   };
 
-  const toggleSuggestions = () => {
-    setShowSuggestions(!showSuggestions);
-    setShowConversations(false);
-    setShowSmartSuggestions(false);
-  };
 
 
   const toggleConversations = () => {
     setShowConversations(!showConversations);
-    setShowSuggestions(false);
     setShowSmartSuggestions(false);
   };
 
   const toggleSmartSuggestions = () => {
     setShowSmartSuggestions(!showSmartSuggestions);
-    setShowSuggestions(false);
     setShowConversations(false);
   };
 
-  // Message d'accueil
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      console.log('👋 Affichage du message d\'accueil');
-      const welcomeMessage: ChatMessage = {
-        id: 'welcome',
-        role: 'assistant',
-        content: `Bonjour${user ? ` ${user.firstName}` : ''} ! 👋
+   // Message d'accueil
+   useEffect(() => {
+     if (isOpen && messages.length === 0) {
+       console.log('👋 Affichage du message d\'accueil');
+       const welcomeMessage: ChatMessage = {
+         id: 'welcome',
+         role: 'assistant',
+         content: `Bonjour${user ? ` ${user.firstName}` : ''} ! 👋
 
-Que puis-je faire pour vous aider aujourd'hui ?`,
-        timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
-    }
-  }, [isOpen, user, messages.length]);
+ Que puis-je faire pour vous aider aujourd'hui ?`,
+         timestamp: new Date()
+       };
+       setMessages([welcomeMessage]);
+     }
+   }, [isOpen, user, messages.length]);
+
+   // Arrêter la lecture TTS quand le chatbot se ferme
+   useEffect(() => {
+     if (!isOpen) {
+       stopSpeaking();
+     }
+   }, [isOpen]);
+
+   // Charger les voix disponibles au démarrage
+   useEffect(() => {
+     const loadVoices = () => {
+       const voices = window.speechSynthesis.getVoices();
+       console.log('🎤 Toutes les voix disponibles:', voices.map(v => `${v.name} (${v.lang})`));
+       
+       // Identifier spécifiquement les voix françaises
+       const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
+       console.log('🎤 Voix françaises trouvées:', frenchVoices.map(v => `${v.name} (${v.lang})`));
+       
+       // Identifier les voix Google françaises
+       const googleFrenchVoices = voices.filter(v => 
+         v.lang.startsWith('fr') && v.name.includes('Google')
+       );
+       console.log('🎤 Voix Google françaises:', googleFrenchVoices.map(v => `${v.name} (${v.lang})`));
+       
+       if (googleFrenchVoices.length > 0) {
+         console.log('✅ Voix Google française disponible:', googleFrenchVoices[0].name);
+       } else {
+         console.warn('⚠️ Aucune voix Google française trouvée');
+       }
+     };
+
+     // Charger immédiatement si disponible
+     loadVoices();
+
+     // Recharger quand les voix sont disponibles (nécessaire sur certains navigateurs)
+     if (window.speechSynthesis.onvoiceschanged !== undefined) {
+       window.speechSynthesis.onvoiceschanged = loadVoices;
+     }
+   }, []);
 
   if (!ChatbotService.isConfigured()) {
     return null; // Ne pas afficher le chatbot si Gemini n'est pas configuré
@@ -337,31 +514,31 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                 {user ? '✅' : '❌'}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              {!isMinimized && (
-                <>
-                  <button
-                    onClick={toggleConversations}
-                    className={cn(
-                      "text-blue-200 hover:text-white transition-colors",
-                      showConversations && "text-white"
-                    )}
-                    aria-label="Afficher les conversations"
-                  >
-                    <MessageSquare size={16} />
-                  </button>
-                  <button
-                    onClick={toggleSuggestions}
-                    className={cn(
-                      "text-blue-200 hover:text-white transition-colors",
-                      showSuggestions && "text-white"
-                    )}
-                    aria-label="Afficher les suggestions"
-                  >
-                    <HelpCircle size={16} />
-                  </button>
-                </>
-              )}
+             <div className="flex items-center space-x-2">
+               {!isMinimized && (
+                 <>
+                   <button
+                     onClick={toggleTts}
+                     className={cn(
+                       "text-blue-200 hover:text-white transition-colors",
+                       ttsEnabled && "text-white"
+                     )}
+                     aria-label={ttsEnabled ? "Désactiver la lecture vocale" : "Activer la lecture vocale"}
+                   >
+                     {ttsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                   </button>
+                   <button
+                     onClick={toggleConversations}
+                     className={cn(
+                       "text-blue-200 hover:text-white transition-colors",
+                       showConversations && "text-white"
+                     )}
+                     aria-label="Afficher les conversations"
+                   >
+                     <MessageSquare size={16} />
+                   </button>
+                 </>
+               )}
               <button
                 onClick={toggleMinimize}
                 className="text-blue-200 hover:text-white transition-colors"
@@ -403,14 +580,7 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                       </button>
                     </div>
                   </div>
-                ) : showSuggestions && messages.length <= 1 ? (
-                  <div className="h-full overflow-y-auto p-4">
-                    <QuickSuggestions 
-                      onSuggestionClick={handleSuggestionClick}
-                      disabled={isLoading}
-                    />
-                  </div>
-                ) : (
+                 ) : (
                   <>
                     {/* Messages */}
                     <div className="h-[400px] overflow-y-auto p-4 space-y-4">
@@ -453,8 +623,8 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                       <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Actions rapides en bas */}
-                    {!showSuggestions && !showConversations && (
+                     {/* Actions rapides en bas */}
+                     {!showConversations && (
                       <div className="border-t border-gray-200 p-2">
                         <div className="flex space-x-1">
                           <button
@@ -468,12 +638,6 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                             className="flex-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors py-1"
                           >
                             🧠 IA
-                          </button>
-                          <button
-                            onClick={toggleSuggestions}
-                            className="flex-1 text-xs text-blue-600 hover:text-blue-800 transition-colors py-1"
-                          >
-                            💡 Suggestions
                           </button>
                         </div>
                       </div>
@@ -505,19 +669,26 @@ Que puis-je faire pour vous aider aujourd'hui ?`,
                   </button>
                 </div>
                 
-                {/* Actions rapides */}
-                <div className="mt-2 flex justify-between items-center">
-                  <button
-                    onClick={clearChat}
-                    className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    Effacer l'historique
-                  </button>
-                  <div className="flex items-center space-x-1 text-xs text-gray-500">
-                    <Bot size={12} />
-                    <span>Powered by Gemini AI</span>
-                  </div>
-                </div>
+                 {/* Actions rapides */}
+                 <div className="mt-2 flex justify-between items-center">
+                   <div className="flex items-center space-x-3">
+                     <button
+                       onClick={clearChat}
+                       className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                     >
+                       Nouvelle conversation
+                     </button>
+                     {ttsEnabled && (
+                       <button
+                         onClick={stopSpeaking}
+                         className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                       >
+                         Arrêter la lecture
+                       </button>
+                     )}
+                   </div>
+                   
+                 </div>
               </div>
             </>
           )}

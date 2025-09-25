@@ -169,6 +169,20 @@ export class ChatbotService {
   }
 
   /**
+   * Met à jour la conversation active
+   */
+  setCurrentConversationId(conversationId: string | undefined) {
+    this.context.currentConversationId = conversationId;
+  }
+
+  /**
+   * Obtient l'ID de la conversation active
+   */
+  getCurrentConversationId(): string | undefined {
+    return this.context.currentConversationId;
+  }
+
+  /**
    * Charge toutes les données disponibles pour l'utilisateur
    */
   private async loadUserData() {
