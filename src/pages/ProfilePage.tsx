@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader } from '../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { UserReports } from '../components/Profile/UserReports';
@@ -10,16 +10,17 @@ import { ProfilePicture } from '../components/Profile/ProfilePicture';
 import { RecentActivity } from '../components/Profile/RecentActivity';
 import { 
   User, 
-  Mail, 
   Shield, 
-  Calendar, 
   Edit3, 
   Save, 
   X, 
   AlertTriangle,
   CheckCircle,
   Eye,
-  EyeOff
+  EyeOff,
+  Activity,
+  Database,
+  Settings
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -166,85 +167,137 @@ export const ProfilePage: React.FC = () => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'family': return 'bg-blue-100 text-blue-800';
-      case 'authority': return 'bg-red-100 text-red-800';
-      case 'volunteer': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'family': return 'bg-neon-blue/10 text-neon-blue border border-neon-blue/30';
+      case 'authority': return 'bg-system-error/10 text-system-error border border-system-error/30';
+      case 'volunteer': return 'bg-system-success/10 text-system-success border border-system-success/30';
+      default: return 'bg-dark-700/50 text-dark-300 border border-dark-600/50';
     }
   };
 
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Profil introuvable</h1>
-          <p className="mt-2 text-gray-600">Impossible de charger les informations du profil.</p>
+      <div className="min-h-screen bg-dark-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 relative">
+          <Card variant="cyber" className="text-center py-12" glow>
+            <CardHeader>
+              <div className="flex items-center justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-system-error/20 rounded-full blur-lg animate-pulse"></div>
+                  <div className="relative p-4 bg-system-error/10 rounded-full border border-system-error/30">
+                    <AlertTriangle className="h-12 w-12 text-system-error" />
+                  </div>
+                </div>
+              </div>
+              <CardTitle className="text-neon-green mb-4">PROFIL INTROUVABLE</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-dark-300 font-mono">IMPOSSIBLE DE CHARGER LES INFORMATIONS DU PROFIL.</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Mon Profil</h1>
-        <p className="mt-2 text-gray-600">
-          Gérez vos informations personnelles et les paramètres de votre compte.
-        </p>
+    <div className="min-h-screen bg-dark-900 relative overflow-hidden">
+      {/* Arrière-plan futuriste */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      <div className="absolute inset-0 bg-circuit-pattern opacity-10"></div>
+      
+      {/* Lignes de données en arrière-plan */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-neon-blue/20 to-transparent animate-data-stream"></div>
+        <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-neon-green/10 to-transparent animate-data-stream" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-2/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-neon-purple/10 to-transparent animate-data-stream" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Message */}
-      {message && (
-        <div className={`mb-6 p-4 rounded-lg flex items-center ${
-          message.type === 'success' 
-            ? 'bg-green-50 border border-green-200' 
-            : 'bg-red-50 border border-red-200'
-        }`}>
-          {message.type === 'success' ? (
-            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-          ) : (
-            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
-          )}
-          <span className={`text-sm ${
-            message.type === 'success' ? 'text-green-800' : 'text-red-800'
-          }`}>
-            {message.text}
-          </span>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 relative">
+        {/* Header futuriste */}
+        <div className="bg-dark-800/50 backdrop-blur-xl border border-dark-700/50 rounded-2xl p-6 mb-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/5 via-transparent to-neon-purple/5 rounded-2xl"></div>
+          <div className="relative">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-neon-blue/20 rounded-full blur-lg animate-pulse"></div>
+                <User className="h-10 w-10 text-neon-blue relative z-10" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-display font-bold text-white mb-2">
+                  CENTRE DE CONTRÔLE UTILISATEUR
+                </h1>
+                <p className="text-dark-300 font-mono text-sm tracking-wider">
+                  GESTION DES INFORMATIONS PERSONNELLES ET PARAMÈTRES DE COMPTE
+                </p>
+              </div>
+            </div>
+            
+            {/* Indicateurs de statut */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-system-success rounded-full animate-pulse"></div>
+                <span className="text-xs font-mono text-dark-400">PROFIL: ACTIF</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Activity className="h-3 w-3 text-neon-blue" />
+                <span className="text-xs font-mono text-dark-400">DERNIÈRE ACTIVITÉ: {new Date().toLocaleTimeString()}</span>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Message futuriste */}
+        {message && (
+          <Card variant={message.type === 'success' ? 'glass' : 'cyber'} className={`mb-6 ${message.type === 'success' ? '' : 'glow'}`}>
+            <CardContent className="flex items-center">
+              {message.type === 'success' ? (
+                <CheckCircle className="h-5 w-5 text-system-success mr-3" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-system-error mr-3 animate-pulse" />
+              )}
+              <span className={`text-sm font-mono ${
+                message.type === 'success' ? 'text-system-success' : 'text-system-error'
+              }`}>
+                {message.text.toUpperCase()}
+              </span>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Profile Information */}
-          <Card>
+          <Card variant="glass" glow>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <CardTitle className="flex items-center text-neon-blue">
                   <User className="h-5 w-5 mr-2" />
-                  Informations personnelles
-                </h3>
+                  INFORMATIONS PERSONNELLES
+                </CardTitle>
                 {!isEditing ? (
                   <Button
                     onClick={() => setIsEditing(true)}
-                    variant="outline"
+                    variant="cyber"
                     size="sm"
                     className="flex items-center"
                   >
                     <Edit3 className="h-4 w-4 mr-1" />
-                    Modifier
+                    MODIFIER
                   </Button>
                 ) : (
                   <div className="flex space-x-2">
                     <Button
                       onClick={handleSaveProfile}
                       disabled={loading}
+                      variant="neon"
                       size="sm"
                       className="flex items-center"
+                      glow
                     >
                       <Save className="h-4 w-4 mr-1" />
-                      {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+                      {loading ? 'SAUVEGARDE...' : 'SAUVEGARDER'}
                     </Button>
                     <Button
                       onClick={() => setIsEditing(false)}
@@ -253,7 +306,7 @@ export const ProfilePage: React.FC = () => {
                       className="flex items-center"
                     >
                       <X className="h-4 w-4 mr-1" />
-                      Annuler
+                      ANNULER
                     </Button>
                   </div>
                 )}
@@ -262,68 +315,71 @@ export const ProfilePage: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prénom
+                  <label className="block text-sm font-display font-semibold text-white mb-2">
+                    PRÉNOM
                   </label>
                   {isEditing ? (
                     <Input
+                      variant="glass"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      placeholder="Votre prénom"
+                      placeholder="VOTRE PRÉNOM"
                     />
                   ) : (
-                    <p className="text-gray-900">{user.firstName || 'Non renseigné'}</p>
+                    <p className="text-white font-mono">{user.firstName || 'NON RENSEIGNÉ'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom
+                  <label className="block text-sm font-display font-semibold text-white mb-2">
+                    NOM
                   </label>
                   {isEditing ? (
                     <Input
+                      variant="glass"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      placeholder="Votre nom"
+                      placeholder="VOTRE NOM"
                     />
                   ) : (
-                    <p className="text-gray-900">{user.lastName || 'Non renseigné'}</p>
+                    <p className="text-white font-mono">{user.lastName || 'NON RENSEIGNÉ'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
+                  <label className="block text-sm font-display font-semibold text-white mb-2">
+                    EMAIL
                   </label>
                   {isEditing ? (
                     <Input
+                      variant="glass"
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="votre@email.com"
+                      placeholder="VOTRE@EMAIL.COM"
                     />
                   ) : (
-                    <p className="text-gray-900">{user.email}</p>
+                    <p className="text-white font-mono">{user.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rôle
+                  <label className="block text-sm font-display font-semibold text-white mb-2">
+                    RÔLE
                   </label>
                   {isEditing ? (
                     <Select
                       value={formData.role}
                       onChange={(value) => handleInputChange('role', value)}
                       options={[
-                        { value: 'volunteer', label: 'Bénévole' },
-                        { value: 'family', label: 'Famille' },
-                        { value: 'authority', label: 'Autorité' }
+                        { value: 'volunteer', label: 'BÉNÉVOLE' },
+                        { value: 'family', label: 'FAMILLE' },
+                        { value: 'authority', label: 'AUTORITÉ' }
                       ]}
                     />
                   ) : (
-                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
-                      {getRoleLabel(user.role)}
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-mono font-medium ${getRoleColor(user.role)}`}>
+                      {getRoleLabel(user.role).toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -332,20 +388,20 @@ export const ProfilePage: React.FC = () => {
           </Card>
 
           {/* Password Section */}
-          <Card>
+          <Card variant="cyber" glow>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <CardTitle className="flex items-center text-neon-green">
                   <Shield className="h-5 w-5 mr-2" />
-                  Sécurité du compte
-                </h3>
+                  SÉCURITÉ DU COMPTE
+                </CardTitle>
                 {!isChangingPassword ? (
                   <Button
                     onClick={() => setIsChangingPassword(true)}
-                    variant="outline"
+                    variant="neon"
                     size="sm"
                   >
-                    Changer le mot de passe
+                    CHANGER MOT DE PASSE
                   </Button>
                 ) : (
                   <Button
@@ -353,7 +409,7 @@ export const ProfilePage: React.FC = () => {
                     variant="outline"
                     size="sm"
                   >
-                    Annuler
+                    ANNULER
                   </Button>
                 )}
               </div>
@@ -362,15 +418,16 @@ export const ProfilePage: React.FC = () => {
               {isChangingPassword ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mot de passe actuel
+                    <label className="block text-sm font-display font-semibold text-white mb-2">
+                      MOT DE PASSE ACTUEL
                     </label>
                     <div className="relative">
                       <Input
+                        variant="cyber"
                         type={showCurrentPassword ? 'text' : 'password'}
                         value={passwordData.currentPassword}
                         onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                        placeholder="Votre mot de passe actuel"
+                        placeholder="VOTRE MOT DE PASSE ACTUEL"
                       />
                       <button
                         type="button"
@@ -378,24 +435,25 @@ export const ProfilePage: React.FC = () => {
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                       >
                         {showCurrentPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
+                          <EyeOff className="h-4 w-4 text-neon-green" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
+                          <Eye className="h-4 w-4 text-neon-green" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nouveau mot de passe
+                    <label className="block text-sm font-display font-semibold text-white mb-2">
+                      NOUVEAU MOT DE PASSE
                     </label>
                     <div className="relative">
                       <Input
+                        variant="cyber"
                         type={showNewPassword ? 'text' : 'password'}
                         value={passwordData.newPassword}
                         onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                        placeholder="Nouveau mot de passe"
+                        placeholder="NOUVEAU MOT DE PASSE"
                       />
                       <button
                         type="button"
@@ -403,37 +461,40 @@ export const ProfilePage: React.FC = () => {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                       >
                         {showNewPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
+                          <EyeOff className="h-4 w-4 text-neon-green" />
                         ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
+                          <Eye className="h-4 w-4 text-neon-green" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirmer le nouveau mot de passe
+                    <label className="block text-sm font-display font-semibold text-white mb-2">
+                      CONFIRMER LE NOUVEAU MOT DE PASSE
                     </label>
                     <Input
+                      variant="cyber"
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                      placeholder="Confirmer le nouveau mot de passe"
+                      placeholder="CONFIRMER LE NOUVEAU MOT DE PASSE"
                     />
                   </div>
 
                   <Button
                     onClick={handleChangePassword}
                     disabled={loading || !passwordData.newPassword || !passwordData.confirmPassword}
+                    variant="neon"
                     className="w-full"
+                    glow
                   >
-                    {loading ? 'Modification...' : 'Modifier le mot de passe'}
+                    {loading ? 'MODIFICATION...' : 'MODIFIER LE MOT DE PASSE'}
                   </Button>
                 </div>
               ) : (
-                <p className="text-gray-600">
-                  Pour des raisons de sécurité, changez régulièrement votre mot de passe.
+                <p className="text-dark-300 font-mono">
+                  POUR DES RAISONS DE SÉCURITÉ, CHANGEZ RÉGULIÈREMENT VOTRE MOT DE PASSE.
                 </p>
               )}
             </CardContent>
@@ -455,33 +516,33 @@ export const ProfilePage: React.FC = () => {
           <RecentActivity />
           
           {/* Account Information */}
-          <Card>
+          <Card variant="glass">
             <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                Informations du compte
-              </h3>
+              <CardTitle className="flex items-center text-neon-blue">
+                <Database className="h-5 w-5 mr-2" />
+                INFORMATIONS DU COMPTE
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">ID du compte</dt>
-                  <dd className="text-sm text-gray-900 font-mono">{user.id}</dd>
+                  <dt className="text-sm font-display font-semibold text-white">ID DU COMPTE</dt>
+                  <dd className="text-sm text-dark-300 font-mono">{user.id}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Rôle</dt>
+                  <dt className="text-sm font-display font-semibold text-white">RÔLE</dt>
                   <dd>
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                      {getRoleLabel(user.role)}
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-mono font-medium ${getRoleColor(user.role)}`}>
+                      {getRoleLabel(user.role).toUpperCase()}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Email vérifié</dt>
-                  <dd className="text-sm text-gray-900">
+                  <dt className="text-sm font-display font-semibold text-white">EMAIL VÉRIFIÉ</dt>
+                  <dd className="text-sm text-white">
                     <span className="inline-flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                      Oui
+                      <CheckCircle className="h-4 w-4 text-system-success mr-1" />
+                      OUI
                     </span>
                   </dd>
                 </div>
@@ -490,9 +551,12 @@ export const ProfilePage: React.FC = () => {
           </Card>
 
           {/* Actions */}
-          <Card>
+          <Card variant="cyber" glow>
             <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
+              <CardTitle className="flex items-center text-neon-green">
+                <Settings className="h-5 w-5 mr-2" />
+                ACTIONS
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -501,20 +565,22 @@ export const ProfilePage: React.FC = () => {
                   variant="outline"
                   className="w-full"
                 >
-                  Se déconnecter
+                  SE DÉCONNECTER
                 </Button>
                 
                 <Button
                   onClick={handleDeleteAccount}
-                  variant="outline"
-                  className="w-full text-red-600 border-red-300 hover:bg-red-50"
+                  variant="danger"
+                  className="w-full"
                   disabled={loading}
+                  glow
                 >
-                  Supprimer le compte
+                  SUPPRIMER LE COMPTE
                 </Button>
               </div>
             </CardContent>
           </Card>
+        </div>
         </div>
       </div>
     </div>
