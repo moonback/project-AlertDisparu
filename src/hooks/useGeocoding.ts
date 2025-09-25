@@ -27,8 +27,8 @@ export const useGeocoding = (debounceMs: number = 1000): UseGeocodingReturn => {
       clearTimeout(timeoutRef.current);
     }
 
-    // Si les champs sont vides, réinitialiser l'état
-    if (!address || !city || !state) {
+    // Si l'adresse est vide, réinitialiser l'état
+    if (!address) {
       setGeocodingStatus('idle');
       setGeocodingResult(null);
       setGeocodingError('');

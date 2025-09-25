@@ -5,7 +5,7 @@ import { ReportCard } from '../components/Reports/ReportCard';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { Plus, Search, AlertTriangle, Users } from 'lucide-react';
+import { Plus, Search, AlertTriangle, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const ReportsPage: React.FC = () => {
@@ -29,11 +29,18 @@ export const ReportsPage: React.FC = () => {
           </p>
         </div>
         
-        <Link to="/signalement">
-          <Button leftIcon={<Plus className="h-4 w-4" />}>
-            Nouveau signalement
-          </Button>
-        </Link>
+        <div className="flex items-center space-x-3">
+          <Link to="/signalement">
+            <Button leftIcon={<Plus className="h-4 w-4" />}>
+              Nouveau signalement
+            </Button>
+          </Link>
+          <Link to="/signalement/alerte">
+            <Button variant="outline" leftIcon={<FileText className="h-4 w-4" />}>
+              Depuis une affiche
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <SearchFilters />

@@ -14,6 +14,7 @@ import { ReportForm } from './components/Reports/ReportForm';
 import { ReportDetail } from './components/Reports/ReportDetail';
 import { MissingPersonsMap } from './components/Map/MissingPersonsMap';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { ReportFromAlertPage } from './pages/ReportFromAlertPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,6 +87,15 @@ function App() {
             </Layout>
           </ProtectedRoute>
         } />
+        
+        <Route path="/signalement/alerte" element={
+          <ProtectedRoute>
+            <Layout>
+              <ReportFromAlertPage />
+            </Layout>
+          </ProtectedRoute>
+        } />
+        
         
         <Route path="/carte" element={
           <ProtectedRoute>
