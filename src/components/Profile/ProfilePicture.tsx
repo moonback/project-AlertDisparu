@@ -121,50 +121,6 @@ export const ProfilePicture: React.FC = () => {
     }
   };
 
-  const testDatabaseConnection = async () => {
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      console.log('🔍 Test de connexion à la base de données...');
-      
-      // Tester la lecture de la table profiles
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, profile_picture')
-        .eq('id', user?.id)
-        .single();
-
-      console.log('📊 Test de lecture:', { data, error });
-
-      if (error) {
-        if (error.message.includes('column "profile_picture" does not exist')) {
-          setMessage({ 
-            type: 'error', 
-            text: '❌ La colonne profile_picture n\'existe pas. Exécutez le script SQL fourni.' 
-          });
-        } else {
-          setMessage({ 
-            type: 'error', 
-            text: `❌ Erreur de connexion: ${error.message}` 
-          });
-        }
-      } else {
-        setMessage({ 
-          type: 'success', 
-          text: '✅ Connexion à la base de données réussie !' 
-        });
-      }
-    } catch (error) {
-      console.error('💥 Exception lors du test:', error);
-      setMessage({ 
-        type: 'error', 
-        text: '❌ Erreur inattendue lors du test de connexion' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
@@ -251,17 +207,6 @@ export const ProfilePicture: React.FC = () => {
                 {loading ? 'Upload en cours...' : 'Sauvegarder la photo'}
               </Button>
             )}
-
-            {/* Bouton de test pour diagnostiquer les problèmes */}
-            <Button
-              onClick={testDatabaseConnection}
-              variant="outline"
-              size="sm"
-              disabled={loading}
-              className="w-full text-xs"
-            >
-              🔍 Tester la connexion DB
-            </Button>
           </div>
 
           {/* Info */}
