@@ -2,31 +2,44 @@ import React, { useState, useEffect } from 'react';
 import { User, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { cn } from '../../utils/cn';
 
 interface UserAvatarProps {
   userId?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   showIndicator?: boolean;
   className?: string;
+  variant?: 'default' | 'ring' | 'shadow';
 }
 
 const sizeClasses = {
-  sm: 'w-6 h-6',
-  md: 'w-8 h-8',
-  lg: 'w-12 h-12'
+  xs: 'w-6 h-6',
+  sm: 'w-8 h-8',
+  md: 'w-10 h-10',
+  lg: 'w-12 h-12',
+  xl: 'w-16 h-16'
 };
 
 const iconSizes = {
-  sm: 'h-3 w-3',
-  md: 'h-4 w-4',
-  lg: 'h-6 w-6'
+  xs: 'h-3 w-3',
+  sm: 'h-4 w-4',
+  md: 'h-5 w-5',
+  lg: 'h-6 w-6',
+  xl: 'h-8 w-8'
+};
+
+const variants = {
+  default: '',
+  ring: 'ring-2 ring-primary-200',
+  shadow: 'shadow-soft'
 };
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({ 
   userId, 
   size = 'md', 
   showIndicator = false,
-  className = ''
+  className = '',
+  variant = 'default'
 }) => {
   const { user: currentUser } = useAuthStore();
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
@@ -89,29 +102,47 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   if (loading) {
     return (
-      <div className={`${sizeClasses[size]} bg-gray-200 rounded-full animate-pulse ${className}`}></div>
+      <div className={cn(
+        sizeClasses[size], 
+        'bg-gray-200 rounded-full animate-pulse',
+        variants[variant],
+        className
+      )}></div>
     );
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={cn('relative', className)}>
       {profilePicture ? (
         <img
           src={profilePicture}
           alt={displayName}
-          className={`${sizeClasses[size]} rounded-full object-cover border-2 border-gray-200 hover:border-red-300 transition-colors`}
+          className={cn(
+            sizeClasses[size],
+            'rounded-full object-cover border-2 border-gray-200 hover:border-primary-300 transition-all duration-200',
+            variants[variant]
+          )}
         />
       ) : (
-        <div className={`${sizeClasses[size]} bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200 hover:border-red-300 transition-colors`}>
-          <User className={`${iconSizes[size]} text-gray-500`} />
+        <div className={cn(
+          sizeClasses[size],
+          'bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-gray-200 hover:border-primary-300 transition-all duration-200',
+          variants[variant]
+        )}>
+          <User className={cn(iconSizes[size], 'text-gray-500')} />
         </div>
       )}
       
       {/* Indicateur de photo manquante */}
       {showIndicator && !loading && !profilePicture && (
-        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white">
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-white shadow-soft flex items-center justify-center">
           <Camera className="h-2 w-2 text-white" />
         </div>
+      )}
+      
+      {/* Indicateur de statut en ligne */}
+      {showIndicator && !loading && profilePicture && (
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-soft"></div>
       )}
     </div>
   );

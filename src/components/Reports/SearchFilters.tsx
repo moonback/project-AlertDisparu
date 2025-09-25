@@ -3,13 +3,14 @@ import { useMissingPersonsStore } from '../../store/missingPersonsStore';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
-import { Search, Filter, X } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '../ui/Card';
+import { Search, Filter, X, MapPin, Calendar, User } from 'lucide-react';
 
 const genderOptions = [
-  { value: 'all', label: 'All Genders' },
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'other', label: 'Other' }
+  { value: 'all', label: 'Tous les genres' },
+  { value: 'male', label: 'Homme' },
+  { value: 'female', label: 'Femme' },
+  { value: 'other', label: 'Autre' }
 ];
 
 export const SearchFilters: React.FC = () => {
@@ -72,94 +73,106 @@ export const SearchFilters: React.FC = () => {
   }, [localFilters.query, localFilters.gender, localFilters.location]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-          <Search className="h-5 w-5 mr-2" />
-          Search Missing Persons
-        </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          <Filter className="h-4 w-4 mr-1" />
-          {showAdvanced ? 'Hide' : 'Show'} Filters
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {/* Basic Search */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
-            placeholder="Search by name or location..."
-            value={localFilters.query}
-            onChange={(e) => handleFilterChange('query', e.target.value)}
-            className="md:col-span-2"
-          />
-          <Select
-            options={genderOptions}
-            value={localFilters.gender}
-            onChange={(e) => handleFilterChange('gender', e.target.value)}
-          />
+    <Card variant="elevated" className="mb-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <Search className="h-5 w-5 mr-2 text-primary-600" />
+            Rechercher des personnes disparues
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            leftIcon={<Filter className="h-4 w-4" />}
+          >
+            {showAdvanced ? 'Masquer' : 'Afficher'} les filtres
+          </Button>
         </div>
+      </CardHeader>
+      <CardContent>
 
-        {/* Advanced Filters */}
-        {showAdvanced && (
-          <div className="pt-4 border-t border-gray-200 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Input
-                label="Location"
-                placeholder="City, State"
-                value={localFilters.location}
-                onChange={(e) => handleFilterChange('location', e.target.value)}
-              />
-              <Input
-                label="Min Age"
-                type="number"
-                min="0"
-                max="150"
-                value={localFilters.minAge}
-                onChange={(e) => handleFilterChange('minAge', e.target.value)}
-              />
-              <Input
-                label="Max Age"
-                type="number"
-                min="0"
-                max="150"
-                value={localFilters.maxAge}
-                onChange={(e) => handleFilterChange('maxAge', e.target.value)}
-              />
-              <div />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                label="Date From"
-                type="date"
-                value={localFilters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              />
-              <Input
-                label="Date To"
-                type="date"
-                value={localFilters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              />
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={clearFilters}
-                  className="w-full flex items-center justify-center"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Clear Filters
-                </Button>
+        <div className="space-y-4">
+          {/* Basic Search */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              placeholder="Rechercher par nom ou localisation..."
+              leftIcon={<Search className="h-5 w-5" />}
+              value={localFilters.query}
+              onChange={(e) => handleFilterChange('query', e.target.value)}
+              className="md:col-span-2"
+            />
+            <Select
+              placeholder="Genre"
+              leftIcon={<User className="h-5 w-5" />}
+              options={genderOptions}
+              value={localFilters.gender}
+              onChange={(e) => handleFilterChange('gender', e.target.value)}
+            />
+          </div>
+
+          {/* Advanced Filters */}
+          {showAdvanced && (
+            <div className="pt-4 border-t border-gray-200 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Input
+                  label="Localisation"
+                  placeholder="Ville, Région"
+                  leftIcon={<MapPin className="h-5 w-5" />}
+                  value={localFilters.location}
+                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                />
+                <Input
+                  label="Âge minimum"
+                  type="number"
+                  min="0"
+                  max="150"
+                  leftIcon={<User className="h-5 w-5" />}
+                  value={localFilters.minAge}
+                  onChange={(e) => handleFilterChange('minAge', e.target.value)}
+                />
+                <Input
+                  label="Âge maximum"
+                  type="number"
+                  min="0"
+                  max="150"
+                  leftIcon={<User className="h-5 w-5" />}
+                  value={localFilters.maxAge}
+                  onChange={(e) => handleFilterChange('maxAge', e.target.value)}
+                />
+                <div />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  label="Date de début"
+                  type="date"
+                  leftIcon={<Calendar className="h-5 w-5" />}
+                  value={localFilters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                />
+                <Input
+                  label="Date de fin"
+                  type="date"
+                  leftIcon={<Calendar className="h-5 w-5" />}
+                  value={localFilters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                />
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="w-full"
+                    leftIcon={<X className="h-4 w-4" />}
+                  >
+                    Effacer les filtres
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
