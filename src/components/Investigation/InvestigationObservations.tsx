@@ -20,7 +20,9 @@ import {
   Phone,
   Mail,
   Car,
-  Users
+  Users,
+  X,
+  Image
 } from 'lucide-react';
 import { InvestigationObservation, ConfidenceLevel } from '../../types';
 import { AddObservationForm } from './AddObservationForm';
@@ -260,6 +262,39 @@ export const InvestigationObservations: React.FC<InvestigationObservationsProps>
                         <div className="bg-gray-50 rounded-lg p-4 mb-4">
                           <p className="text-gray-700 leading-relaxed">{observation.description}</p>
                         </div>
+
+                        {/* Photos de l'observation */}
+                        {observation.photos && observation.photos.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                              <Image className="h-4 w-4 mr-2" />
+                              Photos ({observation.photos.length})
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {observation.photos.map((photoUrl, index) => (
+                                <div key={index} className="relative group">
+                                  <img
+                                    src={photoUrl}
+                                    alt={`Photo ${index + 1} de l'observation`}
+                                    className="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                                    onClick={() => {
+                                      // Ouvrir la photo en plein écran
+                                      window.open(photoUrl, '_blank');
+                                    }}
+                                  />
+                                  {observation.photoDescriptions && observation.photoDescriptions[index] && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-2 rounded-b-lg">
+                                      {observation.photoDescriptions[index]}
+                                    </div>
+                                  )}
+                                  <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Eye className="h-3 w-3 text-gray-600" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Informations supplémentaires */}
                         <div className="space-y-2">

@@ -20,56 +20,79 @@ export interface GeocodingError {
 }
 
 /**
+ * Normalise des segments d'adresse (trim, espaces, accents/régions communes)
+ */
+const normalizePart = (value: string): string => {
+  if (!value) return '';
+  const v = value
+    .replace(/\s+/g, ' ')
+    .replace(/\s*,\s*/g, ', ')
+    .trim();
+  // Corrections courantes FR
+  return v
+    .replace(/ile[- ]?de[- ]?france/gi, 'Île-de-France')
+    .replace(/yvelines/gi, 'Yvelines')
+    .replace(/paris/gi, 'Paris');
+};
+
+/**
+ * Calcule un score de confiance basé sur la précision du résultat
+ */
+const calculateConfidence = (result: any): number => {
+  const precision = result?.importance || 0;
+  if (precision > 0.8) return 1.0;
+  if (precision > 0.6) return 0.8;
+  if (precision > 0.4) return 0.6;
+  if (precision > 0.2) return 0.4;
+  return 0.2;
+};
+
+/**
+ * Point d'appel Nominatim pour une requête libre
+ */
+const geocodeFreeQuery = async (query: string): Promise<GeocodingResult> => {
+  const encodedAddress = encodeURIComponent(query);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&countrycodes=fr&addressdetails=1`;
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'AlertDisparu/1.0 (contact@alertdisparu.fr)',
+      'Accept': 'application/json',
+      'Accept-Language': 'fr-FR,fr;q=0.9'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur HTTP: ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data || data.length === 0) {
+    throw new Error('Aucun résultat trouvé pour cette adresse');
+  }
+
+  const result = data[0];
+  const coordinates: Coordinates = {
+    lat: parseFloat(result.lat),
+    lng: parseFloat(result.lon)
+  };
+
+  const confidence = calculateConfidence(result);
+  return {
+    coordinates,
+    formattedAddress: result.display_name,
+    confidence
+  };
+};
+
+/**
  * Géocode une adresse complète en coordonnées GPS
- * @param address - Adresse complète à géocoder
- * @returns Promise avec les coordonnées ou une erreur
  */
 export const geocodeAddress = async (address: string): Promise<GeocodingResult> => {
   try {
-    // Construire l'URL de l'API Nominatim
-    const encodedAddress = encodeURIComponent(address);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&countrycodes=fr&addressdetails=1`;
-    
-    console.log('🌍 Géocodage de l\'adresse:', address);
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'AlertDisparu/1.0 (contact@alertdisparu.fr)',
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data || data.length === 0) {
-      throw new Error('Aucun résultat trouvé pour cette adresse');
-    }
-
-    const result = data[0];
-    const coordinates: Coordinates = {
-      lat: parseFloat(result.lat),
-      lng: parseFloat(result.lon)
-    };
-
-    // Calculer un score de confiance basé sur la précision
-    const confidence = calculateConfidence(result);
-
-    console.log('✅ Géocodage réussi:', {
-      address: result.display_name,
-      coordinates,
-      confidence
-    });
-
-    return {
-      coordinates,
-      formattedAddress: result.display_name,
-      confidence
-    };
-
+    const normalized = normalizePart(address);
+    console.log('🌍 Géocodage de l\'adresse:', normalized);
+    return await geocodeFreeQuery(normalized);
   } catch (error) {
     console.error('❌ Erreur de géocodage:', error);
     throw {
@@ -80,12 +103,7 @@ export const geocodeAddress = async (address: string): Promise<GeocodingResult> 
 };
 
 /**
- * Géocode une adresse construite à partir des composants
- * @param address - Adresse de rue
- * @param city - Ville
- * @param state - Région/État
- * @param country - Pays (optionnel, par défaut France)
- * @returns Promise avec les coordonnées ou une erreur
+ * Géocode une adresse construite à partir des composants avec fallbacks
  */
 export const geocodeLocation = async (
   address: string,
@@ -93,31 +111,44 @@ export const geocodeLocation = async (
   state: string,
   country: string = 'France'
 ): Promise<GeocodingResult> => {
-  // Construire l'adresse complète
-  const fullAddress = `${address}, ${city}, ${state}, ${country}`;
-  return geocodeAddress(fullAddress);
-};
+  const a = normalizePart(address);
+  const c = normalizePart(city);
+  const s = normalizePart(state);
+  const k = normalizePart(country || 'France');
 
-/**
- * Calcule un score de confiance basé sur la précision du résultat
- * @param result - Résultat de l'API Nominatim
- * @returns Score de confiance entre 0 et 1
- */
-const calculateConfidence = (result: any): number => {
-  const precision = result.importance || 0;
-  
-  // Mapper l'importance (0-1) vers un score de confiance
-  if (precision > 0.8) return 1.0;      // Très précis
-  if (precision > 0.6) return 0.8;      // Précis
-  if (precision > 0.4) return 0.6;      // Moyennement précis
-  if (precision > 0.2) return 0.4;      // Peu précis
-  return 0.2;                           // Très peu précis
+  // Générer plusieurs variantes de requêtes (de la plus précise à la plus large)
+  const queries: string[] = [
+    `${a}, ${c}, ${s}, ${k}`,
+    `${a}, ${c} ${s}, ${k}`,
+    `${a}, ${c}, ${k}`,
+    `${c}, ${s}, ${k}`,
+    `${a}, ${k}`,
+    `${c}, ${k}`,
+  ].filter(Boolean);
+
+  let lastError: any = null;
+  for (const q of queries) {
+    try {
+      console.log('🌍 Tentative géocodage avec:', q);
+      const result = await geocodeFreeQuery(q);
+      console.log('✅ Géocodage réussi:', result);
+      return result;
+    } catch (err) {
+      lastError = err;
+      console.warn('⚠️ Tentative échouée pour', q, err);
+      continue;
+    }
+  }
+
+  // Échec: remonter une erreur claire
+  throw {
+    message: lastError instanceof Error ? lastError.message : 'Aucun résultat trouvé pour cette adresse',
+    code: 'GEOCODING_ERROR'
+  } as GeocodingError;
 };
 
 /**
  * Valide si des coordonnées sont valides
- * @param coordinates - Coordonnées à valider
- * @returns true si les coordonnées sont valides
  */
 export const validateCoordinates = (coordinates: Coordinates): boolean => {
   return (
@@ -129,9 +160,6 @@ export const validateCoordinates = (coordinates: Coordinates): boolean => {
 
 /**
  * Calcule la distance entre deux points en kilomètres
- * @param coord1 - Première coordonnée
- * @param coord2 - Deuxième coordonnée
- * @returns Distance en kilomètres
  */
 export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): number => {
   const R = 6371; // Rayon de la Terre en km
@@ -147,17 +175,15 @@ export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): num
 
 /**
  * Service de géocodage inversé (coordonnées vers adresse)
- * @param coordinates - Coordonnées GPS
- * @returns Promise avec l'adresse formatée
  */
 export const reverseGeocode = async (coordinates: Coordinates): Promise<string> => {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.lat}&lon=${coordinates.lng}&addressdetails=1`;
-    
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'AlertDisparu/1.0 (contact@alertdisparu.fr)',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Accept-Language': 'fr-FR,fr;q=0.9'
       }
     });
 
@@ -166,7 +192,6 @@ export const reverseGeocode = async (coordinates: Coordinates): Promise<string> 
     }
 
     const data = await response.json();
-    
     if (!data || !data.display_name) {
       throw new Error('Impossible de déterminer l\'adresse pour ces coordonnées');
     }

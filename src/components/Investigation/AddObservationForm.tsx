@@ -8,6 +8,7 @@ import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
+import { PhotoUpload, PhotoUploadItem } from '../ui/PhotoUpload';
 import { 
   MapPin, 
   Calendar, 
@@ -18,11 +19,14 @@ import {
   Car, 
   Users,
   Save,
-  X
+  X,
+  Image
 } from 'lucide-react';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
 import { ConfidenceLevel } from '../../types';
+import { useMissingPersonsStore } from '../../store/missingPersonsStore';
+import { supabase } from '../../lib/supabase';
 
 const observationSchema = z.object({
   observerName: z.string().min(2, 'Le nom de l\'observateur doit contenir au moins 2 caractères'),
@@ -69,6 +73,7 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PhotoUploadItem[]>([]);
   const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
   const { addObservation } = useMissingPersonsStore();
   
@@ -92,6 +97,42 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
     geocodeAddress(address, city, state);
   }, [watch, geocodeAddress]);
   
+  // Fonction pour uploader les photos vers Supabase Storage
+  const uploadPhotos = async (photos: PhotoUploadItem[]): Promise<string[]> => {
+    if (photos.length === 0) return [];
+    
+    const uploadedUrls: string[] = [];
+    
+    for (const photo of photos) {
+      try {
+        // Créer un nom de fichier unique
+        const fileExt = photo.file.name.split('.').pop();
+        const fileName = `observation-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        // Upload vers Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('investigation-photos')
+          .upload(fileName, photo.file);
+        
+        if (error) {
+          console.error('Erreur upload photo:', error);
+          continue;
+        }
+        
+        // Obtenir l'URL publique
+        const { data: urlData } = supabase.storage
+          .from('investigation-photos')
+          .getPublicUrl(fileName);
+        
+        uploadedUrls.push(urlData.publicUrl);
+      } catch (error) {
+        console.error('Erreur lors de l\'upload:', error);
+      }
+    }
+    
+    return uploadedUrls;
+  };
+
   const onSubmit = async (data: ObservationFormData) => {
     setIsLoading(true);
     setError(null);
@@ -109,6 +150,15 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
           // Coordonnées par défaut (Paris) en cas d'échec
           coordinates = { lat: 48.8566, lng: 2.3522 };
         }
+      }
+      
+      // Uploader les photos si il y en a
+      let photoUrls: string[] = [];
+      let photoDescriptions: string[] = [];
+      
+      if (photos.length > 0) {
+        photoUrls = await uploadPhotos(photos);
+        photoDescriptions = photos.map(photo => photo.description);
       }
       
       const observationData = {
@@ -131,7 +181,9 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
         behaviorDescription: data.behaviorDescription || undefined,
         companions: data.companions || undefined,
         vehicleInfo: data.vehicleInfo || undefined,
-        witnessContactConsent: data.witnessContactConsent
+        witnessContactConsent: data.witnessContactConsent,
+        photos: photoUrls.length > 0 ? photoUrls : undefined,
+        photoDescriptions: photoDescriptions.length > 0 ? photoDescriptions : undefined
       };
       
       console.log('📝 Données de l\'observation à envoyer:', observationData);
@@ -355,6 +407,27 @@ export const AddObservationForm: React.FC<AddObservationFormProps> = ({
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+        
+        {/* Photos */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Image className="h-5 w-5 mr-2" />
+              Photos de l'observation
+            </h2>
+            <p className="text-sm text-gray-600">
+              Ajoutez des photos pour illustrer votre observation (optionnel)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <PhotoUpload
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={5}
+              maxSizeMB={5}
+            />
           </CardContent>
         </Card>
         

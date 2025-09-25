@@ -461,7 +461,9 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
           createdAt: row.created_at,
           updatedAt: row.updated_at,
           createdBy: row.created_by || undefined,
-          distanceFromDisappearance
+          distanceFromDisappearance,
+          photos: row.photos || undefined,
+          photoDescriptions: row.photo_descriptions || undefined
         };
       });
 
@@ -501,6 +503,8 @@ export const useMissingPersonsStore = create<MissingPersonsState>((set, get) => 
         companions: observationData.companions || null,
         vehicle_info: observationData.vehicleInfo || null,
         witness_contact_consent: observationData.witnessContactConsent,
+        photos: observationData.photos || null,
+        photo_descriptions: observationData.photoDescriptions || null,
         created_by: authState.user.id
       };
 

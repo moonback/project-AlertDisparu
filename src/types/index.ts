@@ -106,4 +106,6 @@ export interface InvestigationObservation {
   updatedAt: string;
   createdBy?: string;
   distanceFromDisappearance?: number; // Distance en km depuis le lieu de disparition
+  photos?: string[]; // URLs des photos jointes
+  photoDescriptions?: string[]; // Descriptions des photos
 }
