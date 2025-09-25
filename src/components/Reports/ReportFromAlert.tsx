@@ -45,11 +45,44 @@ export const ReportFromAlert: React.FC = () => {
     const [firstName, ...rest] = (result.victimName || '').split(' ').filter(Boolean);
     const lastName = rest.join(' ') || undefined;
 
+    // Construire une description complète avec toutes les informations
     const descriptionParts: string[] = [];
-    if (result.description) descriptionParts.push(result.description);
-    if (result.distinctiveMarks) descriptionParts.push(`Signes particuliers: ${result.distinctiveMarks}`);
+    if (result.description) descriptionParts.push(`Résumé: ${result.description}`);
+    
+    // Description physique détaillée
+    const physicalDesc = [];
+    if (result.heightMeters) physicalDesc.push(`Taille: ${result.heightMeters}m`);
+    if (result.weight) physicalDesc.push(`Poids: ${result.weight}`);
+    if (result.hairColor || result.hairLength) physicalDesc.push(`Cheveux: ${[result.hairColor, result.hairLength].filter(Boolean).join(', ')}`);
+    if (result.eyeColor) physicalDesc.push(`Yeux: ${result.eyeColor}`);
+    if (result.bodyType) physicalDesc.push(`Corpulence: ${result.bodyType}`);
+    if (physicalDesc.length > 0) descriptionParts.push(`Description physique: ${physicalDesc.join(', ')}`);
+    
+    // Vêtements et accessoires
+    const clothingDesc = [];
+    if (result.clothing) clothingDesc.push(result.clothing);
+    if (result.accessories) clothingDesc.push(`Accessoires: ${result.accessories}`);
+    if (result.shoes) clothingDesc.push(`Chaussures: ${result.shoes}`);
+    if (clothingDesc.length > 0) descriptionParts.push(`Vêtements: ${clothingDesc.join(', ')}`);
+    
+    // Signes particuliers
+    const marksDesc = [];
+    if (result.distinctiveMarks) marksDesc.push(result.distinctiveMarks);
+    if (result.scars) marksDesc.push(`Cicatrices: ${result.scars}`);
+    if (result.tattoos) marksDesc.push(`Tatouages: ${result.tattoos}`);
+    if (result.piercings) marksDesc.push(`Piercings: ${result.piercings}`);
+    if (marksDesc.length > 0) descriptionParts.push(`Signes particuliers: ${marksDesc.join(', ')}`);
+    
+    // Véhicule et suspect
     if (result.vehicle) descriptionParts.push(`Véhicule: ${result.vehicle}`);
+    if (result.licensePlate) descriptionParts.push(`Immatriculation: ${result.licensePlate}`);
     if (result.suspect) descriptionParts.push(`Suspect: ${result.suspect}`);
+    if (result.suspectDescription) descriptionParts.push(`Description suspect: ${result.suspectDescription}`);
+    
+    // Informations de contact
+    if (result.contactPhone) descriptionParts.push(`Contact: ${result.contactPhone}`);
+    if (result.contactEmail) descriptionParts.push(`Email: ${result.contactEmail}`);
+    
     const description = descriptionParts.join('\n');
 
     // Convertir l'image de l'affiche en base64 pour l'inclure comme photo
@@ -63,25 +96,25 @@ export const ReportFromAlert: React.FC = () => {
       photo: photoBase64,
       caseType: 'abduction' as const,
       dateDisappeared: result.abductedAt ? result.abductedAt.substring(0, 10) : undefined,
-      timeDisappeared: undefined,
+      timeDisappeared: result.abductedAt ? result.abductedAt.substring(11, 16) : undefined,
       locationDisappeared: {
-        address: result.abductedLocation || '',
-        city: '',
+        address: result.abductedLocationDetails || result.abductedLocation || '',
+        city: result.abductedLocation || '',
         state: '',
         country: 'France',
         coordinates: { lat: 0, lng: 0 }
       },
       description,
-      circumstances: 'Informations extraites automatiquement depuis une affiche « Alerte Enlèvement ». À vérifier.',
+      circumstances: result.circumstances || 'Informations extraites automatiquement depuis une affiche « Alerte Enlèvement ». À vérifier.',
       clothingDescription: result.clothing || undefined,
-      personalItems: undefined,
+      personalItems: result.accessories || undefined,
       medicalInfo: undefined,
       behavioralInfo: undefined,
       reporterContact: {
         name: 'Anonyme',
         relationship: 'Témoin',
-        phone: '',
-        email: ''
+        phone: result.contactPhone || '',
+        email: result.contactEmail || ''
       },
       consentGiven: true,
       priority: 'high' as const,
@@ -140,17 +173,116 @@ export const ReportFromAlert: React.FC = () => {
               <Alert variant="success" title="Analyse terminée">
                 Les informations suivantes ont été extraites. Vérifiez et complétez si nécessaire.
               </Alert>
-              <div className="bg-gray-50 rounded p-4 space-y-2 text-sm text-gray-800">
-                <div><strong>Nom victime:</strong> {result.victimName || '—'}</div>
-                <div><strong>Âge:</strong> {result.victimAge ?? '—'}</div>
-                <div><strong>Sexe:</strong> {result.victimGender || '—'}</div>
-                <div><strong>Taille (m):</strong> {result.heightMeters ?? '—'}</div>
-                <div><strong>Cheveux:</strong> {[result.hairColor, result.hairLength].filter(Boolean).join(', ') || '—'}</div>
-                <div><strong>Yeux:</strong> {result.eyeColor || '—'}</div>
-                <div><strong>Vêtements:</strong> {result.clothing || '—'}</div>
-                <div><strong>Lieu/Date enlèvement:</strong> {result.abductedLocation || '—'} {result.abductedAt ? `(${result.abductedAt})` : ''}</div>
-                <div><strong>Véhicule:</strong> {result.vehicle || '—'}</div>
-                <div><strong>Suspect:</strong> {result.suspect || '—'}</div>
+              <div className="bg-gray-50 rounded p-4 space-y-3 text-sm text-gray-800">
+                {/* Informations sur la victime */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">👤 Informations sur la victime</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><strong>Nom:</strong> {result.victimName || '—'}</div>
+                    <div><strong>Âge:</strong> {result.victimAge ?? '—'} ans</div>
+                    <div><strong>Sexe:</strong> {result.victimGender || '—'}</div>
+                    <div><strong>Ethnie:</strong> {result.victimEthnicity || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Description physique */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">👁️ Description physique</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><strong>Taille:</strong> {result.heightMeters ? `${result.heightMeters}m` : '—'}</div>
+                    <div><strong>Poids:</strong> {result.weight || '—'}</div>
+                    <div><strong>Cheveux:</strong> {[result.hairColor, result.hairLength, result.hairStyle].filter(Boolean).join(', ') || '—'}</div>
+                    <div><strong>Yeux:</strong> {result.eyeColor || '—'}</div>
+                    <div><strong>Corpulence:</strong> {result.bodyType || '—'}</div>
+                    <div><strong>Teint:</strong> {result.skinTone || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Vêtements et accessoires */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">👕 Vêtements et accessoires</h4>
+                  <div className="space-y-1">
+                    <div><strong>Vêtements:</strong> {result.clothing || '—'}</div>
+                    <div><strong>Accessoires:</strong> {result.accessories || '—'}</div>
+                    <div><strong>Chaussures:</strong> {result.shoes || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Signes particuliers */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">🔍 Signes particuliers</h4>
+                  <div className="space-y-1">
+                    <div><strong>Signes généraux:</strong> {result.distinctiveMarks || '—'}</div>
+                    <div><strong>Cicatrices:</strong> {result.scars || '—'}</div>
+                    <div><strong>Tatouages:</strong> {result.tattoos || '—'}</div>
+                    <div><strong>Piercings:</strong> {result.piercings || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Circonstances */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">📍 Circonstances</h4>
+                  <div className="space-y-1">
+                    <div><strong>Date/Heure:</strong> {result.abductedAt ? new Date(result.abductedAt).toLocaleString('fr-FR') : '—'}</div>
+                    <div><strong>Lieu:</strong> {result.abductedLocation || '—'}</div>
+                    <div><strong>Adresse précise:</strong> {result.abductedLocationDetails || '—'}</div>
+                    <div><strong>Circonstances:</strong> {result.circumstances || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Véhicule */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">🚗 Véhicule</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><strong>Description:</strong> {result.vehicle || '—'}</div>
+                    <div><strong>Couleur:</strong> {result.vehicleColor || '—'}</div>
+                    <div><strong>Modèle:</strong> {result.vehicleModel || '—'}</div>
+                    <div><strong>Immatriculation:</strong> {result.licensePlate || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Suspect */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">👤 Suspect</h4>
+                  <div className="space-y-1">
+                    <div><strong>Nom:</strong> {result.suspect || '—'}</div>
+                    <div><strong>Âge:</strong> {result.suspectAge ? `${result.suspectAge} ans` : '—'}</div>
+                    <div><strong>Description:</strong> {result.suspectDescription || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Informations de contact */}
+                <div className="border-b pb-3">
+                  <h4 className="font-semibold text-gray-900 mb-2">📞 Contact</h4>
+                  <div className="space-y-1">
+                    <div><strong>Téléphone:</strong> {result.contactPhone || '—'}</div>
+                    <div><strong>Email:</strong> {result.contactEmail || '—'}</div>
+                    <div><strong>Site web:</strong> {result.contactWebsite || '—'}</div>
+                  </div>
+                </div>
+
+                {/* Informations générales */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">ℹ️ Informations générales</h4>
+                  <div className="space-y-1">
+                    <div><strong>Type d'alerte:</strong> {result.alertType || '—'}</div>
+                    <div><strong>Numéro d'alerte:</strong> {result.alertNumber || '—'}</div>
+                    <div><strong>Autorités:</strong> {result.authorities || '—'}</div>
+                    <div><strong>Urgence:</strong> {result.urgency || '—'}</div>
+                    <div><strong>Date affiche:</strong> {result.posterDate || '—'}</div>
+                    <div><strong>Source:</strong> {result.posterSource || '—'}</div>
+                    <div><strong>Confiance analyse:</strong> 
+                      <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        result.confidence === 'high' ? 'bg-green-100 text-green-800' :
+                        result.confidence === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {result.confidence === 'high' ? 'Élevée' : 
+                         result.confidence === 'medium' ? 'Moyenne' : 'Faible'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end space-x-3">
