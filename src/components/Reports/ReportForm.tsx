@@ -103,7 +103,7 @@ export const ReportForm: React.FC = () => {
         consentGiven: data.consentGiven
       });
       
-      navigate('/reports');
+      navigate('/rapports');
     } catch (error) {
       console.error('Error submitting report:', error);
     } finally {
@@ -357,7 +357,7 @@ export const ReportForm: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/rapports')}
               >
                 Cancel
               </Button>

@@ -19,7 +19,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
         await navigator.share({
           title: `Missing: ${report.firstName} ${report.lastName}`,
           text: `Help find ${report.firstName} ${report.lastName}, last seen in ${report.locationDisappeared.city}`,
-          url: window.location.origin + `/reports/${report.id}`
+          url: window.location.origin + `/rapports/${report.id}`
         });
       } catch (err) {
         // Fallback to copying to clipboard
@@ -31,7 +31,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
   };
 
   const copyToClipboard = () => {
-    const url = window.location.origin + `/reports/${report.id}`;
+    const url = window.location.origin + `/rapports/${report.id}`;
     navigator.clipboard.writeText(url);
     // In a real app, you'd show a toast notification here
   };
@@ -41,7 +41,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report }) => {
   );
 
   return (
-    <Link to={`/reports/${report.id}`}>
+    <Link to={`/rapports/${report.id}`}>
       <Card className="h-full hover:shadow-lg transition-all duration-200 group cursor-pointer">
         <CardContent className="p-0">
           <div className="flex flex-col h-full">

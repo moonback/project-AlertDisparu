@@ -35,8 +35,8 @@ export const ReportDetail: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Report Not Found</h1>
           <p className="mt-2 text-gray-600">The missing person report you're looking for doesn't exist.</p>
-          <Link to="/reports" className="mt-4 inline-block">
-            <Button>Back to Reports</Button>
+          <Link to="/rapports" className="mt-4 inline-block">
+            <Button>Retour aux rapports</Button>
           </Link>
         </div>
       </div>
@@ -79,9 +79,9 @@ export const ReportDetail: React.FC = () => {
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-6">
-        <Link to="/reports" className="inline-flex items-center text-red-600 hover:text-red-700 mb-4">
+        <Link to="/rapports" className="inline-flex items-center text-red-600 hover:text-red-700 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Reports
+          Retour aux rapports
         </Link>
         
         {/* Proximity Alert */}

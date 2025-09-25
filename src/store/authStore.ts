@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { getAuthErrorMessage } from '../utils/errorMessages';
 
 interface AuthState {
@@ -27,6 +27,27 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true });
         
         try {
+          // Mode démo si Supabase n'est pas configuré
+          if (!isSupabaseConfigured) {
+            // Utilisateur de démonstration
+            const demoUser: User = {
+              id: 'demo-user',
+              email: 'demo@alertdisparu.com',
+              firstName: 'Utilisateur',
+              lastName: 'Démo',
+              role: 'volunteer'
+            };
+
+            set({
+              user: demoUser,
+              isAuthenticated: true,
+              token: 'demo-token',
+              loading: false
+            });
+
+            return { success: true };
+          }
+
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -79,6 +100,26 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true });
         
         try {
+          // Mode démo si Supabase n'est pas configuré
+          if (!isSupabaseConfigured) {
+            const demoUser: User = {
+              id: `demo-${Date.now()}`,
+              email: userData.email,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              role: userData.role
+            };
+
+            set({
+              user: demoUser,
+              isAuthenticated: true,
+              token: 'demo-token',
+              loading: false
+            });
+
+            return { success: true };
+          }
+
           // Créer le compte utilisateur
           const { data, error } = await supabase.auth.signUp({
             email: userData.email,
@@ -153,6 +194,31 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true });
         
         try {
+          // Mode démo si Supabase n'est pas configuré
+          if (!isSupabaseConfigured) {
+            // Vérifier si un utilisateur démo est déjà enregistré
+            const storedAuth = localStorage.getItem('auth-storage');
+            if (storedAuth) {
+              try {
+                const parsed = JSON.parse(storedAuth);
+                if (parsed.state?.user && parsed.state?.isAuthenticated) {
+                  set({
+                    user: parsed.state.user,
+                    isAuthenticated: true,
+                    token: parsed.state.token,
+                    loading: false
+                  });
+                  return;
+                }
+              } catch (e) {
+                // Ignorer les erreurs de parsing
+              }
+            }
+            
+            set({ loading: false });
+            return;
+          }
+
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session?.user) {

@@ -20,10 +20,10 @@ export const ReportsPage: React.FC = () => {
           </p>
         </div>
         
-        <Link to="/report">
+        <Link to="/signalement">
           <Button className="flex items-center space-x-2">
             <Plus className="h-4 w-4" />
-            <span>New Report</span>
+            <span>Nouveau signalement</span>
           </Button>
         </Link>
       </div>
@@ -44,8 +44,8 @@ export const ReportsPage: React.FC = () => {
               : 'There are currently no missing person reports.'
             }
           </p>
-          <Link to="/report">
-            <Button>Report Missing Person</Button>
+          <Link to="/signalement">
+            <Button>Signaler une disparition</Button>
           </Link>
         </div>
       ) : (

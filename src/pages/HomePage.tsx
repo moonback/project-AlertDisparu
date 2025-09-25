@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
                         {new Date(report.dateDisappeared).toLocaleDateString()}
                       </div>
                       
-                      <Link to={`/reports/${report.id}`} className="mt-2 inline-block">
+                      <Link to={`/rapports/${report.id}`} className="mt-2 inline-block">
                         <Button size="sm" variant="outline">Voir les détails</Button>
                       </Link>
                     </div>

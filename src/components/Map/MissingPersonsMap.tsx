@@ -169,9 +169,9 @@ export const MissingPersonsMap: React.FC = () => {
                         Last seen: {new Date(report.dateDisappeared).toLocaleDateString()}
                       </p>
                       
-                      <Link to={`/reports/${report.id}`}>
+                      <Link to={`/rapports/${report.id}`}>
                         <Button size="sm" className="mt-2 w-full">
-                          View Details
+                          Voir les détails
                         </Button>
                       </Link>
                     </div>
