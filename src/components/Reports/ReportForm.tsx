@@ -8,8 +8,11 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
+import { GeocodingStatus } from '../ui/GeocodingStatus';
 import { Upload, X, MapPin, User, Calendar, Phone, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { geocodeLocation } from '../../services/geocoding';
+import { useGeocoding } from '../../hooks/useGeocoding';
 
 const reportSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
@@ -46,6 +49,7 @@ const genderOptions = [
 export const ReportForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const { geocodingStatus, geocodingResult, geocodingError, geocodeAddress } = useGeocoding(1000);
   const { addReport } = useMissingPersonsStore();
   const navigate = useNavigate();
   
@@ -75,14 +79,36 @@ export const ReportForm: React.FC = () => {
   const removeImage = () => {
     setUploadedImage(null);
   };
+
+  // Géocoder automatiquement quand les champs d'adresse changent
+  const handleAddressChange = useCallback(() => {
+    const address = watch('locationAddress');
+    const city = watch('locationCity');
+    const state = watch('locationState');
+    
+    geocodeAddress(address, city, state);
+  }, [watch, geocodeAddress]);
   
   const onSubmit = async (data: ReportFormData) => {
     setIsLoading(true);
     console.log('🚀 Début soumission rapport:', data);
     
     try {
-      // TODO: remplacer par géocodage réel si besoin
-      const mockCoordinates = { lat: 48.8566, lng: 2.3522 };
+      // Utiliser les coordonnées géocodées si disponibles, sinon géocoder maintenant
+      let coordinates = geocodingResult?.coordinates;
+      
+      if (!coordinates) {
+        console.log('🌍 Géocodage en cours pour la soumission...');
+        try {
+          const result = await geocodeLocation(data.locationAddress, data.locationCity, data.locationState, 'France');
+          coordinates = result.coordinates;
+          console.log('✅ Géocodage réussi pour la soumission:', coordinates);
+        } catch (error) {
+          console.warn('⚠️ Géocodage échoué, utilisation de coordonnées par défaut:', error);
+          // Coordonnées par défaut (Paris) en cas d'échec
+          coordinates = { lat: 48.8566, lng: 2.3522 };
+        }
+      }
       
       const reportData = {
         firstName: data.firstName,
@@ -96,7 +122,7 @@ export const ReportForm: React.FC = () => {
           city: data.locationCity,
           state: data.locationState,
           country: 'France',
-          coordinates: mockCoordinates
+          coordinates: coordinates
         },
         description: data.description,
         reporterContact: {
@@ -246,7 +272,9 @@ export const ReportForm: React.FC = () => {
               
               <Input
                 label="Adresse"
-                {...register('locationAddress')}
+                {...register('locationAddress', {
+                  onChange: handleAddressChange
+                })}
                 error={errors.locationAddress?.message}
                 placeholder="12 rue de l'Exemple"
                 required
@@ -255,19 +283,30 @@ export const ReportForm: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Ville"
-                  {...register('locationCity')}
+                  {...register('locationCity', {
+                    onChange: handleAddressChange
+                  })}
                   error={errors.locationCity?.message}
                   required
                 />
                 
                 <Input
                   label="État / Région"
-                  {...register('locationState')}
+                  {...register('locationState', {
+                    onChange: handleAddressChange
+                  })}
                   error={errors.locationState?.message}
                   placeholder="Île-de-France"
                   required
                 />
               </div>
+
+              {/* Statut du géocodage */}
+              <GeocodingStatus
+                status={geocodingStatus}
+                result={geocodingResult}
+                error={geocodingError}
+              />
             </div>
           </CardContent>
         </Card>
