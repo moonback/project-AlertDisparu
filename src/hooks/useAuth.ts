@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 
 export const useAuth = () => {
-  const { initializeAuth, loading } = useAuthStore();
+  const { initializeAuth, loading, user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Initialiser l'authentification au montage du composant
@@ -29,5 +29,5 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, [initializeAuth]);
 
-  return { loading };
+  return { loading, user, isAuthenticated };
 };

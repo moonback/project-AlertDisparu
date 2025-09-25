@@ -15,6 +15,7 @@ import { ReportDetail } from './components/Reports/ReportDetail';
 import { MissingPersonsMap } from './components/Map/MissingPersonsMap';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { ReportFromAlertPage } from './pages/ReportFromAlertPage';
+import { FloatingChatbot } from './components/Chatbot/FloatingChatbot';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -52,6 +53,9 @@ function App() {
 
   return (
     <Router>
+      {/* Chatbot flottant global */}
+      <FloatingChatbot />
+      
       <Routes>
         {/* Public Routes */}
         <Route path="/connexion" element={<PublicRoute><LoginForm /></PublicRoute>} />
