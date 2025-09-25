@@ -28,8 +28,20 @@ export const ReportFromAlert: React.FC = () => {
     clear();
   };
 
-  const toReportPayload = () => {
-    if (!result) return null;
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const toReportPayload = async () => {
+    if (!result || !file) return null;
     const [firstName, ...rest] = (result.victimName || '').split(' ').filter(Boolean);
     const lastName = rest.join(' ') || undefined;
 
@@ -40,12 +52,15 @@ export const ReportFromAlert: React.FC = () => {
     if (result.suspect) descriptionParts.push(`Suspect: ${result.suspect}`);
     const description = descriptionParts.join('\n');
 
+    // Convertir l'image de l'affiche en base64 pour l'inclure comme photo
+    const photoBase64 = await fileToBase64(file);
+
     return {
       firstName: firstName || 'Inconnu',
       lastName: lastName || 'Inconnu',
       age: result.victimAge || undefined,
       gender: result.victimGender || undefined,
-      photo: undefined as string | undefined,
+      photo: photoBase64,
       caseType: 'abduction' as const,
       dateDisappeared: result.abductedAt ? result.abductedAt.substring(0, 10) : undefined,
       timeDisappeared: undefined,
@@ -75,7 +90,7 @@ export const ReportFromAlert: React.FC = () => {
   };
 
   const handleCreateReport = async () => {
-    const payload = toReportPayload();
+    const payload = await toReportPayload();
     if (!payload) return;
     setIsSubmitting(true);
     const res = await addReport(payload as any);
@@ -139,8 +154,8 @@ export const ReportFromAlert: React.FC = () => {
               </div>
 
               <div className="flex justify-end space-x-3">
-                <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} onClick={() => {
-                  const payload = toReportPayload();
+                <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} onClick={async () => {
+                  const payload = await toReportPayload();
                   if (!payload) return;
                   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
