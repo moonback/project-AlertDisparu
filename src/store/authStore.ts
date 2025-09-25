@@ -154,20 +154,24 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initializeAuth: async () => {
+        console.log('🔐 Initialisation de l\'authentification...');
         set({ loading: true });
         
         try {
-          // plus de mode démo
-
           const { data: { session } } = await supabase.auth.getSession();
+          console.log('📋 Session Supabase:', session);
           
           if (session?.user) {
+            console.log('👤 Utilisateur trouvé dans la session:', session.user.id);
+            
             // Récupérer le profil utilisateur
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .single();
+
+            console.log('👥 Profil utilisateur:', { profile, profileError });
 
             if (!profileError && profile) {
               const user: User = {
@@ -178,6 +182,8 @@ export const useAuthStore = create<AuthState>()(
                 role: profile.role
               };
 
+              console.log('✅ Utilisateur configuré dans le store:', user);
+
               set({
                 user,
                 isAuthenticated: true,
@@ -185,14 +191,68 @@ export const useAuthStore = create<AuthState>()(
                 loading: false
               });
             } else {
+              console.error('❌ Erreur profil utilisateur:', profileError);
               set({ loading: false });
             }
           } else {
-            set({ loading: false });
+            console.log('❌ Aucune session trouvée - vérification du store local');
+            
+            // Vérifier si on a un utilisateur dans le store local
+            const currentState = get();
+            if (currentState.user && currentState.isAuthenticated) {
+              console.log('🔄 Tentative de re-synchronisation avec Supabase...');
+              
+              // Essayer de rafraîchir la session avec le token local
+              try {
+                const { data: { user: refreshedUser }, error: refreshError } = await supabase.auth.getUser();
+                
+                if (refreshedUser && !refreshError) {
+                  console.log('✅ Session Supabase restaurée:', refreshedUser.id);
+                  
+                  // Récupérer le profil
+                  const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', refreshedUser.id)
+                    .single();
+
+                  if (!profileError && profile) {
+                    const user: User = {
+                      id: profile.id,
+                      email: profile.email,
+                      firstName: profile.first_name,
+                      lastName: profile.last_name,
+                      role: profile.role
+                    };
+
+                    set({
+                      user,
+                      isAuthenticated: true,
+                      token: currentState.token,
+                      loading: false
+                    });
+                    return;
+                  }
+                }
+              } catch (refreshErr) {
+                console.error('❌ Échec de la re-synchronisation:', refreshErr);
+              }
+              
+              // Si la re-synchronisation échoue, déconnecter
+              console.log('🚪 Déconnexion forcée - session Supabase invalide');
+              set({
+                user: null,
+                isAuthenticated: false,
+                token: null,
+                loading: false
+              });
+            } else {
+              set({ loading: false });
+            }
           }
         } catch (error) {
           set({ loading: false });
-          console.error('Erreur lors de l\'initialisation de l\'authentification:', error);
+          console.error('💥 Erreur lors de l\'initialisation de l\'authentification:', error);
         }
       }
     }),

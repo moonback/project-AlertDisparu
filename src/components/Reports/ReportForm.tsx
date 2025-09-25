@@ -74,12 +74,13 @@ export const ReportForm: React.FC = () => {
   
   const onSubmit = async (data: ReportFormData) => {
     setIsLoading(true);
+    console.log('🚀 Début soumission rapport:', data);
     
     try {
       // TODO: remplacer par géocodage réel si besoin
       const mockCoordinates = { lat: 48.8566, lng: 2.3522 };
       
-      const result = await addReport({
+      const reportData = {
         firstName: data.firstName,
         lastName: data.lastName,
         age: data.age,
@@ -101,13 +102,24 @@ export const ReportForm: React.FC = () => {
           email: data.reporterEmail
         },
         consentGiven: data.consentGiven
-      });
+      };
+      
+      console.log('📝 Données du rapport à envoyer:', reportData);
+      
+      const result = await addReport(reportData);
+      
+      console.log('📊 Résultat de l\'ajout:', result);
       
       if (result.success) {
+        console.log('✅ Rapport ajouté avec succès, redirection...');
         navigate('/rapports');
+      } else {
+        console.error('❌ Erreur lors de l\'ajout:', result.error);
+        alert(`Erreur: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error submitting report:', error);
+      console.error('💥 Erreur exception lors de la soumission:', error);
+      alert(`Erreur inattendue: ${error}`);
     } finally {
       setIsLoading(false);
     }
