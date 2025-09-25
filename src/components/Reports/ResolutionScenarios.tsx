@@ -363,6 +363,14 @@ export const ResolutionScenarios: React.FC<ResolutionScenariosProps> = ({
                         </p>
                       </div>
                       <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleSavedScenario(`${savedScenario.id}-content`)}
+                          leftIcon={expandedSavedScenarios.has(`${savedScenario.id}-content`) ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        >
+                          {expandedSavedScenarios.has(`${savedScenario.id}-content`) ? 'Réduire' : 'Développer'}
+                        </Button>
                         {onUpdateScenario && (
                           <Button
                             variant="outline"
@@ -388,44 +396,73 @@ export const ResolutionScenarios: React.FC<ResolutionScenariosProps> = ({
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      {/* Scénario 1 */}
-                      <ScenarioCard 
-                        scenario={savedScenario.scenario1} 
-                        title={savedScenario.scenario1.title}
-                        index={1}
-                        isExpanded={expandedSavedScenarios.has(`${savedScenario.id}-1`)}
-                        onToggle={() => toggleSavedScenario(`${savedScenario.id}-1`)}
-                      />
-                      {/* Scénario 2 */}
-                      <ScenarioCard 
-                        scenario={savedScenario.scenario2} 
-                        title={savedScenario.scenario2.title}
-                        index={2}
-                        isExpanded={expandedSavedScenarios.has(`${savedScenario.id}-2`)}
-                        onToggle={() => toggleSavedScenario(`${savedScenario.id}-2`)}
-                      />
-                      {/* Résumé */}
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <h5 className="font-medium text-blue-900 mb-2">Résumé de l'analyse</h5>
-                        <p className="text-blue-800">{savedScenario.summary}</p>
+                    {expandedSavedScenarios.has(`${savedScenario.id}-content`) ? (
+                      <div className="space-y-6">
+                        {/* Scénario 1 */}
+                        <ScenarioCard 
+                          scenario={savedScenario.scenario1} 
+                          title={savedScenario.scenario1.title}
+                          index={1}
+                          isExpanded={expandedSavedScenarios.has(`${savedScenario.id}-1`)}
+                          onToggle={() => toggleSavedScenario(`${savedScenario.id}-1`)}
+                        />
+                        {/* Scénario 2 */}
+                        <ScenarioCard 
+                          scenario={savedScenario.scenario2} 
+                          title={savedScenario.scenario2.title}
+                          index={2}
+                          isExpanded={expandedSavedScenarios.has(`${savedScenario.id}-2`)}
+                          onToggle={() => toggleSavedScenario(`${savedScenario.id}-2`)}
+                        />
+                        {/* Résumé */}
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                          <h5 className="font-medium text-blue-900 mb-2">Résumé de l'analyse</h5>
+                          <p className="text-blue-800">{savedScenario.summary}</p>
+                        </div>
+                        {/* Recommandations */}
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                            Recommandations générales
+                          </h5>
+                          <ul className="space-y-2">
+                            {savedScenario.recommendations.map((recommendation, recIndex) => (
+                              <li key={recIndex} className="flex items-start">
+                                <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                                <span className="text-gray-700">{recommendation}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                      {/* Recommandations */}
-                      <div>
-                        <h5 className="font-medium text-gray-900 mb-3 flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                          Recommandations générales
-                        </h5>
-                        <ul className="space-y-2">
-                          {savedScenario.recommendations.map((recommendation, recIndex) => (
-                            <li key={recIndex} className="flex items-start">
-                              <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-700">{recommendation}</span>
-                            </li>
-                          ))}
-                        </ul>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Résumé réduit */}
+                        <div>
+                          <p className="text-gray-700 leading-relaxed text-sm">
+                            {savedScenario.summary.length > 200 
+                              ? `${savedScenario.summary.substring(0, 200)}...` 
+                              : savedScenario.summary}
+                          </p>
+                        </div>
+                        
+                        {/* Informations clés réduites */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" size="sm" className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(savedScenario.generationDate).toLocaleDateString('fr-FR')}
+                          </Badge>
+                          <Badge variant="outline" size="sm" className="flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            {savedScenario.recommendations.length} recommandation{savedScenario.recommendations.length > 1 ? 's' : ''}
+                          </Badge>
+                          <Badge variant="outline" size="sm" className="flex items-center gap-1">
+                            <Lightbulb className="h-3 w-3" />
+                            {savedScenario.aiModelUsed}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
