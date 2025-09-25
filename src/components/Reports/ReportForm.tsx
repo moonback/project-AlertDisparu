@@ -9,7 +9,7 @@ import { Select } from '../ui/Select';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Alert } from '../ui/Alert';
 import { GeocodingStatus } from '../ui/GeocodingStatus';
-import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock, AlertTriangle } from 'lucide-react';
+import { Upload, X, MapPin, User, Calendar, Phone, Mail, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { geocodeLocation } from '../../services/geocoding';
 import { useGeocoding } from '../../hooks/useGeocoding';
@@ -22,10 +22,10 @@ const reportSchema = z.object({
     .min(0, "L'âge doit être positif")
     .max(150, "L'âge doit être raisonnable"),
   gender: z.enum(['male', 'female', 'other'], {
-    required_error: 'Veuillez sélectionner le genre'
+    message: 'Veuillez sélectionner le genre'
   }),
   caseType: z.enum(['disappearance', 'runaway', 'abduction', 'missing_adult', 'missing_child'], {
-    required_error: 'Veuillez sélectionner le type de cas'
+    message: 'Veuillez sélectionner le type de cas'
   }),
   dateDisappeared: z.string().min(1, 'La date est requise'),
   timeDisappeared: z.string().optional(),
@@ -74,7 +74,6 @@ export const ReportForm: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
     watch
   } = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema)
@@ -156,7 +155,7 @@ export const ReportForm: React.FC = () => {
           email: data.reporterEmail
         },
         consentGiven: data.consentGiven,
-        priority: 'medium', // Sera calculé automatiquement par le trigger
+        priority: 'medium' as const, // Sera calculé automatiquement par le trigger
         isEmergency: false // Sera calculé automatiquement par le trigger
       };
       
@@ -182,7 +181,7 @@ export const ReportForm: React.FC = () => {
   };
   
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center mb-4">
           <User className="h-10 w-10 text-primary-600 mr-2" />

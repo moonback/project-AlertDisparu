@@ -175,7 +175,7 @@ export const ProfilePage: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Profil introuvable</h1>
           <p className="mt-2 text-gray-600">Impossible de charger les informations du profil.</p>
@@ -185,7 +185,7 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Mon Profil</h1>

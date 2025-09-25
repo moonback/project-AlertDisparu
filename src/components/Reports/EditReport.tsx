@@ -266,7 +266,7 @@ export const EditReport: React.FC = () => {
 
   if (isLoadingReport) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Chargement du rapport...</p>
@@ -277,7 +277,7 @@ export const EditReport: React.FC = () => {
 
   if (error && !isLoadingReport) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <Alert variant="error" title="Erreur">
           {error}
         </Alert>
@@ -291,7 +291,7 @@ export const EditReport: React.FC = () => {
   }
   
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <Button
           variant="outline"

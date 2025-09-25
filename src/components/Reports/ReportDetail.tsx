@@ -50,7 +50,7 @@ export const ReportDetail: React.FC = () => {
 
   if (!report) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-6">
             <Eye className="h-12 w-12 text-gray-400" />
@@ -122,7 +122,7 @@ export const ReportDetail: React.FC = () => {
   const stats = getObservationStats();
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-6">
         <Link to="/rapports" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4 transition-colors">

@@ -33,7 +33,7 @@ export const HomePage: React.FC = () => {
               </div>
               <h1 className="text-5xl font-bold text-gray-900">AlertDisparu</h1>
             </div>
-            <p className="text-xl text-gray-600 mb-10 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-600 mb-10 max-w-7xl mx-auto leading-relaxed">
               Une plateforme sécurisée, conforme au RGPD, connectant les familles, les autorités et les communautés 
               pour retrouver les personnes disparues rapidement et en toute sécurité.
             </p>
