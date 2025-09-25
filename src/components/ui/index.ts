@@ -17,3 +17,5 @@ export { SearchInput } from './SearchInput';
 export { StatCard } from './StatCard';
 export { FilterPanel } from './FilterPanel';
 export { Table } from './Table';
+export { ProximityAlert } from './ProximityAlert';
+export { ComponentShowcase } from './ComponentShowcase';
