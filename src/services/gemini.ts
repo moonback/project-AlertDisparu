@@ -41,7 +41,7 @@ export async function analyzeImageWithGemini(
     const base64Image = await fileToBase64(imageFile);
     
     // Initialiser le modèle Gemini
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
     // Construire le prompt pour l'analyse
     const prompt = buildAnalysisPrompt(missingPersonName, missingPersonDescription);
